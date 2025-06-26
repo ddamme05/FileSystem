@@ -1,0 +1,50 @@
+# General application configuration
+spring:
+  application:
+    name: file-system
+
+  # --- Profile-specific configurations ---
+  profiles:
+    active: dev # Sets the default profile to 'dev'
+
+---
+# --- Development Profile (dev) ---
+spring:
+  config:
+    activate:
+      on-profile: dev
+  # Server port for the application
+  web:
+    server:
+      port: 8080
+  # Database connection settings for PostgreSQL
+  datasource:
+    url: jdbc:postgresql://localhost:5432/file-metadata-db
+    username: user
+    password: password
+    driver-class-name: org.postgresql.Driver
+  # JPA/Hibernate settings
+  jpa:
+    hibernate:
+      ddl-auto: update # Automatically updates the schema on startup
+    show-sql: true # Logs SQL statements for debugging
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+
+# --- Production Profile (prod) - Placeholder ---
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+  # In production, these properties would be overridden by environment variables
+  # for security, so we leave them blank or with placeholders here.
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: validate # Validates the schema, does not make changes 
