@@ -1,4 +1,4 @@
-# File System Service - A Learning Journey
+# File System Service
 
 ## 🚧 Work in Progress 🚧
 
