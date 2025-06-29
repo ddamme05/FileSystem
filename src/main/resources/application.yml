@@ -1,18 +1,8 @@
-# General application configuration
 spring:
   application:
     name: file-system
-
-  # --- Profile-specific configurations ---
   profiles:
-    active: dev # Sets the default profile to 'dev'
-
----
-# --- Development Profile (dev) ---
-spring:
-  config:
-    activate:
-      on-profile: dev
+    active: dev
   # Database connection settings for PostgreSQL
   datasource:
     url: jdbc:postgresql://localhost:5433/file_system_db
@@ -29,7 +19,6 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
 
-# Server port for the application
 server:
   port: 8080
 
@@ -39,19 +28,3 @@ management:
     metrics:
       export:
         enabled: false # Disable sending metrics to Datadog for local development
-
-# --- Production Profile (prod) - Placeholder ---
----
-spring:
-  config:
-    activate:
-      on-profile: prod
-  # In production, these properties would be overridden by environment variables
-  # for security, so we leave them blank or with placeholders here.
-  datasource:
-    url: ${DB_URL}
-    username: ${DB_USERNAME}
-    password: ${DB_PASSWORD}
-  jpa:
-    hibernate:
-      ddl-auto: validate # Validates the schema, does not make changes 

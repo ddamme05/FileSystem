@@ -1,0 +1,14 @@
+spring:
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: validate # Validates the schema, does not make changes
+    show-sql: false
+management:
+  datadog:
+    metrics:
+      export:
+        enabled: true 
