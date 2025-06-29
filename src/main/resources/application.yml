@@ -13,13 +13,9 @@ spring:
   config:
     activate:
       on-profile: dev
-  # Server port for the application
-  web:
-    server:
-      port: 8080
   # Database connection settings for PostgreSQL
   datasource:
-    url: jdbc:postgresql://localhost:5432/file-metadata-db
+    url: jdbc:postgresql://localhost:5433/file_system_db
     username: user
     password: password
     driver-class-name: org.postgresql.Driver
@@ -32,6 +28,17 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
+
+# Server port for the application
+server:
+  port: 8080
+
+# Management endpoints and metrics settings
+management:
+  datadog:
+    metrics:
+      export:
+        enabled: false # Disable sending metrics to Datadog for local development
 
 # --- Production Profile (prod) - Placeholder ---
 ---
