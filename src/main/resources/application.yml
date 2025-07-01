@@ -28,3 +28,7 @@ management:
     metrics:
       export:
         enabled: false # Disable sending metrics to Datadog for local development
+
+aws:
+  s3:
+    bucket-name: your-unique-bucket-name
