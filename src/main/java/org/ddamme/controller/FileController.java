@@ -9,7 +9,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Map;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/files")
@@ -42,17 +41,11 @@ public class FileController {
     @GetMapping("/download/{id}")
     public ResponseEntity<?> downloadFile(@PathVariable Long id) {
         // 1. Get metadata from database
-        Optional<FileMetadata> metadataOptional = metadataService.findById(id);
-        
-        if (metadataOptional.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-        
-        FileMetadata metadata = metadataOptional.get();
-        
+        FileMetadata metadata = metadataService.findById(id);
+
         // 2. Generate presigned download URL
         String downloadUrl = storageService.generatePresignedDownloadUrl(metadata.getStorageKey());
-        
+
         // 3. Return the URL
         return ResponseEntity.ok(Map.of("downloadUrl", downloadUrl));
     }
@@ -60,20 +53,14 @@ public class FileController {
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteFile(@PathVariable Long id) {
         // 1. Get metadata from database
-        Optional<FileMetadata> metadataOptional = metadataService.findById(id);
-        
-        if (metadataOptional.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-        
-        FileMetadata metadata = metadataOptional.get();
-        
+        FileMetadata metadata = metadataService.findById(id);
+
         // 2. Delete file from storage
         storageService.delete(metadata.getStorageKey());
-        
+
         // 3. Delete metadata record from database
         metadataService.deleteById(id);
-        
+
         // 4. Return 204 No Content
         return ResponseEntity.noContent().build();
     }
