@@ -27,7 +27,15 @@ management:
   datadog:
     metrics:
       export:
-        enabled: false # Disable sending metrics to Datadog for local development
+        # Datadog is disabled by default. It is enabled in the 'prod' profile.
+        enabled: false
+
+application:
+  security:
+    jwt:
+      # This secret key should be a long, random, Base64-encoded string.
+      # It is read from the JWT_SECRET_KEY environment variable.
+      secret-key: ${JWT_SECRET_KEY:}
 
 aws:
   s3:

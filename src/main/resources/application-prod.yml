@@ -11,4 +11,6 @@ management:
   datadog:
     metrics:
       export:
-        enabled: true 
+        enabled: true
+        api-key: ${DD_API_KEY}
+        uri: ${DD_URI:https://api.datadoghq.com} 
