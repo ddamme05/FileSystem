@@ -13,15 +13,13 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http
+        return http
                 // 1. Disable CSRF protection, as we are not using cookies for session management
                 .csrf(AbstractHttpConfigurer::disable)
 
                 .authorizeHttpRequests(authorize -> authorize
-                        // For now, permit all requests. We will configure specific rules later.
                         .anyRequest().permitAll()
-                );
-
-        return http.build();
+                )
+                .build();
     }
 } 
