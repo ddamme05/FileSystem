@@ -2,11 +2,7 @@ package org.ddamme.security.service;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.io.Decoders;
-import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
-import lombok.RequiredArgsConstructor;
-import org.ddamme.security.properties.JwtProperties;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
@@ -15,16 +11,13 @@ import java.util.Date;
 import java.util.function.Function;
 
 @Service
-@RequiredArgsConstructor
 public class JwtService {
 
-    private final JwtProperties jwtProperties;
     private SecretKey secretKey;
 
     @PostConstruct
     public void init() {
-            byte[] keyBytes = Decoders.BASE64.decode(jwtProperties.getSecretKey());
-            this.secretKey = Keys.hmacShaKeyFor(keyBytes);
+        this.secretKey = Jwts.SIG.HS256.key().build();
     }
 
     public String extractUsername(String token) {
