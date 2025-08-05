@@ -32,4 +32,4 @@ management:
 
 aws:
   s3:
-    bucket-name: your-unique-bucket-name
+    bucket-name: filesystem-s3

@@ -12,12 +12,6 @@
 - [ ] 🔧 Refactoring
 - [ ] 🔒 Security
 
-## 🎯 Related Issues
-<!-- Link using "Closes #123" or "Fixes #456" -->
-
-- Closes #
-- Related to #
-
 ## 🚀 Changes Made
 <!-- Key changes in this PR -->
 
