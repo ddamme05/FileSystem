@@ -1,6 +1,7 @@
 package org.ddamme.advice;
 
 import org.ddamme.dto.ErrorResponse;
+import org.ddamme.exception.AccessDeniedException;
 import org.ddamme.exception.DuplicateResourceException;
 import org.ddamme.exception.ResourceNotFoundException;
 import org.springframework.http.HttpStatus;
@@ -26,6 +27,20 @@ public class GlobalExceptionHandler {
                 request.getDescription(false)
         );
         return new ResponseEntity<>(errorResponse, HttpStatus.CONFLICT);
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAccessDeniedException(
+            AccessDeniedException ex, WebRequest request) {
+
+        ErrorResponse errorResponse = new ErrorResponse(
+                LocalDateTime.now(),
+                HttpStatus.FORBIDDEN.value(),
+                "Forbidden",
+                ex.getMessage(),
+                request.getDescription(false)
+        );
+        return new ResponseEntity<>(errorResponse, HttpStatus.FORBIDDEN);
     }
 
     @ExceptionHandler(ResourceNotFoundException.class)
