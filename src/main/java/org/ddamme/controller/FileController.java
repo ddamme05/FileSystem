@@ -3,6 +3,7 @@ package org.ddamme.controller;
 import lombok.RequiredArgsConstructor;
 import org.ddamme.database.model.FileMetadata;
 import org.ddamme.database.model.User;
+import org.ddamme.dto.FileUploadResponse;
 import org.ddamme.exception.AccessDeniedException;
 import org.ddamme.service.MetadataService;
 import org.ddamme.service.StorageService;
@@ -22,13 +23,13 @@ public class FileController {
     private final StorageService storageService;
 
     @PostMapping("/upload")
-    public ResponseEntity<?> uploadFile(@RequestParam("file") MultipartFile file, Authentication authentication) {
+    public ResponseEntity<FileUploadResponse> uploadFile(@RequestParam("file") MultipartFile file, Authentication authentication) {
         // 1. Get the current authenticated user
         User currentUser = (User) authentication.getPrincipal();
-        
+
         // 2. Upload the file to storage and get the storage key
         String storageKey = storageService.upload(file);
-        
+
         // 3. Create metadata record with user association
         FileMetadata metadata = FileMetadata.builder()
                 .originalFilename(file.getOriginalFilename())
@@ -37,12 +38,24 @@ public class FileController {
                 .contentType(file.getContentType())
                 .user(currentUser)
                 .build();
-        
+
         // 4. Save metadata to database
         FileMetadata savedMetadata = metadataService.save(metadata);
-        
-        // 5. Return the saved metadata
-        return ResponseEntity.ok(savedMetadata);
+
+        // 5. Create clean response DTO (no sensitive user data)
+        FileUploadResponse response = FileUploadResponse.builder()
+                .id(savedMetadata.getId())
+                .originalFilename(savedMetadata.getOriginalFilename())
+                .storageKey(savedMetadata.getStorageKey())
+                .size(savedMetadata.getSize())
+                .contentType(savedMetadata.getContentType())
+                .uploaderUsername(currentUser.getUsername())
+                .uploadTimestamp(savedMetadata.getUploadTimestamp())
+                .updateTimestamp(savedMetadata.getUpdateTimestamp())
+                .build();
+
+        // 6. Return clean response
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/download/{id}")
