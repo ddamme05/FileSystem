@@ -70,6 +70,9 @@ public class FileController {
         FileMetadata metadata = metadataService.findById(id);
         
         // 3. Verify user owns this file
+        if (metadata.getUser() == null) {
+            throw new AccessDeniedException("File has no owner - access denied");
+        }
         if (!metadata.getUser().getId().equals(currentUser.getId())) {
             throw new AccessDeniedException("You can only access your own files");
         }
@@ -88,6 +91,9 @@ public class FileController {
         FileMetadata metadata = metadataService.findById(id);
         
         // 3. Verify user owns this file
+        if (metadata.getUser() == null) {
+            throw new AccessDeniedException("File has no owner - access denied");
+        }
         if (!metadata.getUser().getId().equals(currentUser.getId())) {
             throw new AccessDeniedException("You can only delete your own files");
         }
