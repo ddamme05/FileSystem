@@ -1,4 +1,5 @@
 package org.ddamme.controller;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 
 import lombok.RequiredArgsConstructor;
 import org.ddamme.database.model.FileMetadata;
@@ -24,6 +25,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/files")
 @RequiredArgsConstructor
+@SecurityRequirement(name = "bearerAuth")
 public class FileController {
 
     private final MetadataService metadataService;
