@@ -16,3 +16,39 @@ This project is my hands-on lab for learning and mastering a variety of modern b
 -   **CI/CD Principles:** Setting up a pipeline for automated builds and testing. (Maybe)
 
 As I learn, I'll be implementing new features and refactoring existing code. The primary goal is education and practical experience, so you'll see the project evolve over time.
+
+## API Docs
+
+- Swagger UI: `/swagger-ui/index.html`
+- OpenAPI JSON: `/v3/api-docs`
+
+Authentication: Click "Authorize" in Swagger and paste `Bearer <JWT>` after obtaining a token via `POST /api/v1/auth/login` or `POST /api/v1/auth/register`.
+
+## Quickstart (Local)
+
+1) Start Postgres
+
+```bash
+docker compose up -d postgres-db
+```
+
+2) Run the app
+
+```bash
+./gradlew bootRun
+```
+
+3) Test auth and files
+
+- Register: `POST /api/v1/auth/register`
+- Login: `POST /api/v1/auth/login`
+- Upload: `POST /files/upload` (multipart form, field `file`)
+- List: `GET /files`
+- Download URL: `GET /files/download/{id}`
+- Delete: `DELETE /files/{id}`
+
+Default config is in `src/main/resources/application.yml`. Override in prod via env vars.
+
+More details: see `docs/api.md`.
+ 
+Example environment file: see `docs/env.example`.

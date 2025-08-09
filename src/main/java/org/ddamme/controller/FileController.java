@@ -1,4 +1,5 @@
 package org.ddamme.controller;
+import io.swagger.v3.oas.annotations.Operation;
 
 import lombok.RequiredArgsConstructor;
 import org.ddamme.database.model.FileMetadata;
@@ -6,19 +7,21 @@ import org.ddamme.database.model.User;
 import org.ddamme.dto.FileListResponse;
 import org.ddamme.dto.FileUploadResponse;
 import org.ddamme.dto.PagedFileResponse;
+import org.ddamme.dto.DownloadUrlResponse;
 import org.ddamme.exception.AccessDeniedException;
 import org.ddamme.service.MetadataService;
 import org.ddamme.service.StorageService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestController
@@ -29,8 +32,9 @@ public class FileController {
     private final MetadataService metadataService;
     private final StorageService storageService;
 
-    @PostMapping("/upload")
-    public ResponseEntity<FileUploadResponse> uploadFile(@RequestParam("file") MultipartFile file, @AuthenticationPrincipal User currentUser) {
+    @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "Upload a file to storage and create metadata")
+    public ResponseEntity<FileUploadResponse> uploadFile(@RequestPart("file") MultipartFile file, @AuthenticationPrincipal User currentUser) {
 
         // 2. Upload the file to storage and get the storage key
         String storageKey = storageService.upload(file);
@@ -64,7 +68,8 @@ public class FileController {
     }
 
     @GetMapping("/download/{id}")
-    public ResponseEntity<?> downloadFile(@PathVariable Long id, @AuthenticationPrincipal User currentUser) {
+    @Operation(summary = "Generate a presigned download URL for your file")
+    public ResponseEntity<DownloadUrlResponse> downloadFile(@PathVariable Long id, @AuthenticationPrincipal User currentUser) {
         
         // 2. Get metadata from database
         FileMetadata metadata = metadataService.findById(id);
@@ -81,10 +86,11 @@ public class FileController {
         String downloadUrl = storageService.generatePresignedDownloadUrl(metadata.getStorageKey());
 
         // 5. Return the URL
-        return ResponseEntity.ok(Map.of("downloadUrl", downloadUrl));
+        return ResponseEntity.ok(DownloadUrlResponse.builder().downloadUrl(downloadUrl).build());
     }
 
     @DeleteMapping("/{id}")
+    @Operation(summary = "Delete your file")
     public ResponseEntity<?> deleteFile(@PathVariable Long id, @AuthenticationPrincipal User currentUser) {
         
         // 2. Get metadata from database
@@ -109,6 +115,7 @@ public class FileController {
     }
 
     @GetMapping
+    @Operation(summary = "List your files (paginated)")
     public ResponseEntity<PagedFileResponse> getUserFiles(
             @AuthenticationPrincipal User currentUser,
             @RequestParam(defaultValue = "0") int page,

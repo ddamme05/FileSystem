@@ -1,5 +1,7 @@
 package org.ddamme.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.ddamme.database.model.User;
@@ -27,6 +29,7 @@ public class AuthController {
     private final AuthenticationManager authenticationManager;
 
     @PostMapping("/register")
+    @Operation(summary = "Register a new user and receive a JWT")
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
         // Register the user
         User user = userService.registerUser(request);
@@ -45,6 +48,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
+    @Operation(summary = "Login with username and password to receive a JWT")
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
         // Authenticate the user
         Authentication authentication = authenticationManager.authenticate(
