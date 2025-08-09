@@ -49,16 +49,15 @@ class JwtServiceTest {
 
     @Test
     @DisplayName("isTokenValid throws ExpiredJwtException for expired token")
-    void token_invalid_whenExpired() throws InterruptedException {
+    void token_invalid_whenExpired() {
         JwtProperties shortLived = new JwtProperties();
-        shortLived.setExpirationMs(1);
+        shortLived.setExpirationMs(-1000);
         shortLived.setSecret("MDEyMzQ1Njc4OWFiY2RlZmdoaWprbG1uMDEyMzQ1Njc4OWFiY2RlZg==");
         JwtService shortSvc = new JwtService(shortLived);
         shortSvc.initializeSecretKey();
 
         UserDetails user = User.withUsername("alice").password("p").roles("USER").build();
         String token = shortSvc.generateToken(user);
-        Thread.sleep(5);
         assertThatThrownBy(() -> shortSvc.isTokenValid(token, user))
                 .isInstanceOf(ExpiredJwtException.class);
     }

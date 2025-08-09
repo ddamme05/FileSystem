@@ -20,7 +20,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
-import org.springframework.security.crypto.password.NoOpPasswordEncoder;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -88,8 +89,8 @@ class AuthControllerTest {
     @TestConfiguration
     static class NoOpEncoderConfig {
         @Bean
-        public NoOpPasswordEncoder passwordEncoder() {
-            return (NoOpPasswordEncoder) NoOpPasswordEncoder.getInstance();
+        public PasswordEncoder passwordEncoder() {
+            return new BCryptPasswordEncoder();
         }
     }
 }
