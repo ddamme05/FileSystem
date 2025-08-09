@@ -7,6 +7,7 @@ import org.ddamme.database.model.User;
 import org.ddamme.dto.FileListResponse;
 import org.ddamme.dto.FileUploadResponse;
 import org.ddamme.dto.PagedFileResponse;
+import org.ddamme.dto.DownloadUrlResponse;
 import org.ddamme.exception.AccessDeniedException;
 import org.ddamme.service.MetadataService;
 import org.ddamme.service.StorageService;
@@ -68,7 +69,7 @@ public class FileController {
 
     @GetMapping("/download/{id}")
     @Operation(summary = "Generate a presigned download URL for your file")
-    public ResponseEntity<org.ddamme.dto.DownloadUrlResponse> downloadFile(@PathVariable Long id, @AuthenticationPrincipal User currentUser) {
+    public ResponseEntity<DownloadUrlResponse> downloadFile(@PathVariable Long id, @AuthenticationPrincipal User currentUser) {
         
         // 2. Get metadata from database
         FileMetadata metadata = metadataService.findById(id);
@@ -85,7 +86,7 @@ public class FileController {
         String downloadUrl = storageService.generatePresignedDownloadUrl(metadata.getStorageKey());
 
         // 5. Return the URL
-        return ResponseEntity.ok(org.ddamme.dto.DownloadUrlResponse.builder().downloadUrl(downloadUrl).build());
+        return ResponseEntity.ok(DownloadUrlResponse.builder().downloadUrl(downloadUrl).build());
     }
 
     @DeleteMapping("/{id}")

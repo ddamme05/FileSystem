@@ -2,6 +2,7 @@ package org.ddamme.security.service;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.ddamme.security.properties.JwtProperties;
 import org.springframework.stereotype.Service;
@@ -9,6 +10,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
+import java.util.Base64;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.function.Function;
@@ -20,11 +22,25 @@ public class JwtService {
     private final JwtProperties jwtProperties;
     private SecretKey secretKey;
 
-    private SecretKey getSecretKey() {
-        if (secretKey == null) {
-            byte[] keyBytes = jwtProperties.getSecret().getBytes(StandardCharsets.UTF_8);
-            this.secretKey = new SecretKeySpec(keyBytes, "HmacSHA256");
+    @PostConstruct
+    public void initializeSecretKey() {
+        String configuredSecret = jwtProperties.getSecret();
+        if (configuredSecret == null || configuredSecret.isBlank()) {
+            throw new IllegalStateException("SECURITY_JWT_SECRET must be set to a base64-encoded key (>= 256 bits)");
         }
+        byte[] keyBytes;
+        try {
+            keyBytes = Base64.getDecoder().decode(configuredSecret);
+        } catch (IllegalArgumentException ex) {
+            throw new IllegalStateException("SECURITY_JWT_SECRET must be base64-encoded", ex);
+        }
+        if (keyBytes.length < 32) {
+            throw new IllegalStateException("SECURITY_JWT_SECRET must be at least 32 bytes (256 bits)");
+        }
+        this.secretKey = new SecretKeySpec(keyBytes, "HmacSHA256");
+    }
+
+    private SecretKey getSecretKey() {
         return secretKey;
     }
 

@@ -50,3 +50,5 @@ docker compose up -d postgres-db
 Default config is in `src/main/resources/application.yml`. Override in prod via env vars.
 
 More details: see `docs/api.md`.
+ 
+Example environment file: see `docs/env.example`.
