@@ -1,6 +1,5 @@
 package org.ddamme.controller;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
 
 import lombok.RequiredArgsConstructor;
 import org.ddamme.database.model.FileMetadata;
@@ -27,7 +26,6 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/files")
 @RequiredArgsConstructor
-@Tag(name = "Files")
 public class FileController {
 
     private final MetadataService metadataService;
