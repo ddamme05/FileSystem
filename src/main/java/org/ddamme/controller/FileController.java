@@ -1,6 +1,5 @@
 package org.ddamme.controller;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 import lombok.RequiredArgsConstructor;
@@ -23,13 +22,11 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/files")
 @RequiredArgsConstructor
-@SecurityRequirement(name = "bearerAuth")
 @Tag(name = "Files")
 public class FileController {
 
@@ -94,6 +91,7 @@ public class FileController {
     }
 
     @DeleteMapping("/{id}")
+    @Operation(summary = "Delete your file")
     public ResponseEntity<?> deleteFile(@PathVariable Long id, @AuthenticationPrincipal User currentUser) {
         
         // 2. Get metadata from database
@@ -118,6 +116,7 @@ public class FileController {
     }
 
     @GetMapping
+    @Operation(summary = "List your files (paginated)")
     public ResponseEntity<PagedFileResponse> getUserFiles(
             @AuthenticationPrincipal User currentUser,
             @RequestParam(defaultValue = "0") int page,
