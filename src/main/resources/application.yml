@@ -36,7 +36,8 @@ aws:
 
 security:
   jwt:
-    # Use a strong secret in prod; can be overridden with env var SECURITY_JWT_SECRET
-    secret: change-me-in-dev
+    # JWT secret must be provided via environment variable SECURITY_JWT_SECRET.
+    # Use a random base64-encoded string with at least 256 bits (32 bytes) of entropy.
+    secret: ${SECURITY_JWT_SECRET:}
     # 24 hours by default (ms)
-    expiration-ms: 86400000
+    expiration-ms: ${SECURITY_JWT_EXPIRATION_MS:86400000}
