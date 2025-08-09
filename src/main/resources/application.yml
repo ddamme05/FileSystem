@@ -33,3 +33,10 @@ management:
 aws:
   s3:
     bucket-name: filesystem-s3
+
+security:
+  jwt:
+    # Use a strong secret in prod; can be overridden with env var SECURITY_JWT_SECRET
+    secret: change-me-in-dev
+    # 24 hours by default (ms)
+    expiration-ms: 86400000
