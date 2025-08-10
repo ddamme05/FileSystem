@@ -16,16 +16,6 @@ public abstract class BaseIntegrationTest {
                     .withUsername("user")
                     .withPassword("password");
 
-    @BeforeAll
-    static void startContainer() {
-        POSTGRES.start();
-    }
-
-    @AfterAll
-    static void stopContainer() {
-        POSTGRES.stop();
-    }
-
     @DynamicPropertySource
     static void registerDynamicProperties(DynamicPropertyRegistry registry) {
         registry.add("spring.datasource.url", POSTGRES::getJdbcUrl);
