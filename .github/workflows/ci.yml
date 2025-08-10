@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, '**' ]
+  pull_request:
+    branches: [ '**' ]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java (Amazon Corretto)
+        uses: actions/setup-java@v4
+        with:
+          distribution: corretto
+          java-version: '21'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Docker info (for Testcontainers)
+        run: |
+          docker --version
+          docker info
+
+      - name: Run tests
+        env:
+          CI: true
+          TZ: UTC
+        run: ./gradlew --no-daemon clean test integrationTest
+
+      - name: Upload test reports (always)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: |
+            build/reports/tests/**
+            build/test-results/**
+          if-no-files-found: ignore
+
+
