@@ -101,7 +101,6 @@ class FileControllerS3IT extends BaseIntegrationTest {
                 .andReturn();
 
         String uploadBody = uploadRes.getResponse().getContentAsString();
-        System.out.println("Upload response: " + uploadBody);
 
         // Verify via list side-effect
         MvcResult listRes = mockMvc.perform(get("/files").header("Authorization", "Bearer " + token))
@@ -126,6 +125,7 @@ class FileControllerS3IT extends BaseIntegrationTest {
                 .andExpect(status().isNoContent());
     }
 
+    @Configuration
     static class LocalStackS3Config {
         @Bean
         @Primary
