@@ -27,6 +27,8 @@ public abstract class BaseIntegrationTest {
         registry.add("spring.jpa.hibernate.ddl-auto", () -> "create-drop");
         registry.add("security.jwt.secret", () -> "MDEyMzQ1Njc4OWFiY2RlZmdoaWprbG1uMDEyMzQ1Njc4OWFiY2RlZg==");
         registry.add("aws.s3.bucket-name", () -> "test-bucket");
+        registry.add("management.health.db.enabled", () -> "false");
+        registry.add("spring.datasource.hikari.maximumPoolSize", () -> "1");
         registry.add("spring.datasource.hikari.maxLifetime", () -> HIKARI_MAX_LIFETIME_FOR_TESTS);
         registry.add("spring.jpa.show-sql", () -> "false");
     }
