@@ -24,7 +24,6 @@ public abstract class BaseIntegrationTest {
 
     @DynamicPropertySource
     static void registerDynamicProperties(DynamicPropertyRegistry registry) {
-        registry.add("spring.jpa.hibernate.ddl-auto", () -> "create-drop");
         registry.add("security.jwt.secret", () -> "MDEyMzQ1Njc4OWFiY2RlZmdoaWprbG1uMDEyMzQ1Njc4OWFiY2RlZg==");
         registry.add("aws.s3.bucket-name", () -> "test-bucket");
         registry.add("management.health.db.enabled", () -> "false");
