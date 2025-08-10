@@ -9,7 +9,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.JsonPath;
-import java.net.URI;
 import java.time.Duration;
 import org.ddamme.dto.LoginRequest;
 import org.ddamme.dto.RegisterRequest;
@@ -19,39 +18,28 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
-import org.springframework.context.annotation.Primary;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
-import org.testcontainers.containers.localstack.LocalStackContainer;
-import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
-import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
-import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
-import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.CreateBucketRequest;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
+import org.ddamme.testsupport.LocalStackS3TestConfig;
 
 @SpringBootTest
 @AutoConfigureMockMvc
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 @Testcontainers
-@Import(FileControllerS3IT.LocalStackS3Config.class)
+@Import(LocalStackS3TestConfig.class)
+@ActiveProfiles("it-localstack")
 class FileControllerS3IT extends BaseIntegrationTest {
-
-    private static final DockerImageName LOCALSTACK_IMAGE = DockerImageName.parse("localstack/localstack:3.6");
-
-    @Container
-    static final LocalStackContainer LOCALSTACK = new LocalStackContainer(LOCALSTACK_IMAGE)
-            .withServices(LocalStackContainer.Service.S3);
 
     @Autowired
     private MockMvc mockMvc;
@@ -126,28 +114,7 @@ class FileControllerS3IT extends BaseIntegrationTest {
                 .andExpect(status().isNoContent());
     }
 
-    @Configuration
-    static class LocalStackS3Config {
-        @Bean
-        @Primary
-        S3Client s3ClientOverride() {
-            return S3Client.builder()
-                    .credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create("test", "test")))
-                    .region(Region.of(LOCALSTACK.getRegion()))
-                    .endpointOverride(URI.create(LOCALSTACK.getEndpointOverride(LocalStackContainer.Service.S3).toString()))
-                    .build();
-        }
-
-        @Bean
-        @Primary
-        S3Presigner s3PresignerOverride() {
-            return S3Presigner.builder()
-                    .credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create("test", "test")))
-                    .region(Region.of(LOCALSTACK.getRegion()))
-                    .endpointOverride(URI.create(LOCALSTACK.getEndpointOverride(LocalStackContainer.Service.S3).toString()))
-                    .build();
-        }
-    }
+    // Beans provided by LocalStackS3TestConfig
 }
 
 
