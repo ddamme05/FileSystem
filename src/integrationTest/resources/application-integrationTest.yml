@@ -1,0 +1,11 @@
+spring:
+  flyway:
+    # Fail fast if DB has objects but no Flyway history; prevents silent baselining
+    baseline-on-migrate: false
+    # Ensure a pristine schema before migrations for deterministic tests
+    clean-before-migrate: true
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+

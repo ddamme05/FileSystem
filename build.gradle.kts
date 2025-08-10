@@ -21,6 +21,8 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
+    implementation("org.flywaydb:flyway-core")
+    implementation("org.flywaydb:flyway-database-postgresql")
     implementation("io.micrometer:micrometer-registry-datadog")
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.9")
     implementation("software.amazon.awssdk:s3")
@@ -44,7 +46,6 @@ dependencies {
 dependencyManagement {
     imports {
         mavenBom("software.amazon.awssdk:bom:2.31.72")
-        // Align Testcontainers modules
         mavenBom("org.testcontainers:testcontainers-bom:1.20.2")
     }
 }
@@ -60,10 +61,7 @@ tasks.withType<Test> {
 // Integration test source set
 sourceSets {
     create("integrationTest") {
-        java.srcDir("src/integrationTest/java")
-        resources.srcDir("src/integrationTest/resources")
         compileClasspath += sourceSets["main"].output
-        // Also include test outputs so we can reuse test support classes like TestMocksConfig
         compileClasspath += sourceSets["test"].output
         compileClasspath += configurations["testRuntimeClasspath"]
         runtimeClasspath += output

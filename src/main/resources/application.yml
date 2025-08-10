@@ -12,12 +12,16 @@ spring:
   # JPA/Hibernate settings
   jpa:
     hibernate:
-      ddl-auto: update # Automatically updates the schema on startup
+      ddl-auto: validate # Validate schema; Flyway manages migrations
     show-sql: true # Logs SQL statements for debugging
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    clean-disabled: true
 
 server:
   port: 8080
@@ -27,7 +31,6 @@ management:
   datadog:
     metrics:
       export:
-        # Datadog is disabled by default. It is enabled in the 'prod' profile.
         enabled: false
 
 aws:
@@ -36,8 +39,6 @@ aws:
 
 security:
   jwt:
-    # JWT secret must be provided via environment variable SECURITY_JWT_SECRET.
-    # Use a random base64-encoded string with at least 256 bits (32 bytes) of entropy.
     secret: ${SECURITY_JWT_SECRET}
     # 24 hours by default (ms)
     expiration-ms: ${SECURITY_JWT_EXPIRATION_MS:86400000}

@@ -5,7 +5,7 @@ spring:
     password: ${DB_PASSWORD}
   jpa:
     hibernate:
-      ddl-auto: validate # Validates the schema, does not make changes
+      ddl-auto: validate
     show-sql: false
 management:
   datadog:
