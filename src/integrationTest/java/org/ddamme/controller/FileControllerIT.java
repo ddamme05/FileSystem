@@ -15,6 +15,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
+import org.ddamme.testsupport.TestStorageConfig;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
@@ -25,6 +27,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 @SpringBootTest
 @AutoConfigureMockMvc
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
+@Import(TestStorageConfig.class)
 class FileControllerIT extends BaseIntegrationTest {
 
     @Autowired
@@ -90,6 +93,39 @@ class FileControllerIT extends BaseIntegrationTest {
 
         // 3) Authorized GET /files
         mockMvc.perform(get("/files").header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("Authorized upload returns 200 with valid JWT")
+    void upload_withJwt_ok() throws Exception {
+        String username = "itupload" + System.currentTimeMillis();
+        String email = username + "@example.com";
+        RegisterRequest register = RegisterRequest.builder()
+                .username(username)
+                .email(email)
+                .password("secret123")
+                .build();
+        mockMvc.perform(post("/api/v1/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(register)))
+                .andExpect(status().isOk());
+
+        LoginRequest login = LoginRequest.builder()
+                .username(username)
+                .password("secret123")
+                .build();
+        MvcResult loginResult = mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(login)))
+                .andExpect(status().isOk())
+                .andReturn();
+        String token = JsonPath.read(loginResult.getResponse().getContentAsString(), "$.token");
+
+        MockMultipartFile file = new MockMultipartFile("file", "hello.txt", MediaType.TEXT_PLAIN_VALUE, "hi".getBytes());
+        mockMvc.perform(multipart("/files/upload")
+                        .file(file)
+                        .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk());
     }
 }
