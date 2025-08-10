@@ -34,11 +34,17 @@ dependencies {
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.springframework.security:spring-security-test")
+    // Testcontainers (managed by BOM below)
+    testImplementation("org.springframework.boot:spring-boot-testcontainers")
+    testImplementation("org.testcontainers:junit-jupiter")
+    testImplementation("org.testcontainers:postgresql")
 }
 
 dependencyManagement {
     imports {
         mavenBom("software.amazon.awssdk:bom:2.31.72")
+        // Align Testcontainers modules
+        mavenBom("org.testcontainers:testcontainers-bom:1.20.2")
     }
 }
 
@@ -49,3 +55,31 @@ tasks.test {
 tasks.withType<Test> {
     useJUnitPlatform()
 }
+
+// Integration test source set
+sourceSets {
+    create("integrationTest") {
+        java.srcDir("src/integrationTest/java")
+        resources.srcDir("src/integrationTest/resources")
+        compileClasspath += sourceSets["main"].output
+        // Also include test outputs so we can reuse test support classes like TestMocksConfig
+        compileClasspath += sourceSets["test"].output
+        compileClasspath += configurations["testRuntimeClasspath"]
+        runtimeClasspath += output
+        runtimeClasspath += compileClasspath
+    }
+}
+
+configurations["integrationTestImplementation"].extendsFrom(configurations.testImplementation.get())
+configurations["integrationTestRuntimeOnly"].extendsFrom(configurations.testRuntimeOnly.get())
+
+tasks.register<Test>("integrationTest") {
+    description = "Runs integration tests."
+    group = "verification"
+    testClassesDirs = sourceSets["integrationTest"].output.classesDirs
+    classpath = sourceSets["integrationTest"].runtimeClasspath
+    useJUnitPlatform()
+    shouldRunAfter("test")
+}
+
+tasks.check { dependsOn("integrationTest") }
