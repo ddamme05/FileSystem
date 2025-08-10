@@ -32,15 +32,18 @@ class AuthControllerTest {
     private JwtService jwtService;
     private AuthenticationManager authenticationManager;
 
+    private static final LocalValidatorFactoryBean validator = new LocalValidatorFactoryBean();
+
     @BeforeEach
     void setup() {
         userService = Mockito.mock(UserService.class);
         jwtService = Mockito.mock(JwtService.class);
         authenticationManager = Mockito.mock(AuthenticationManager.class);
         AuthController controller = new AuthController(userService, jwtService, authenticationManager);
+        validator.afterPropertiesSet();
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
                 .setMessageConverters(new MappingJackson2HttpMessageConverter())
-                .setValidator(new LocalValidatorFactoryBean())
+                .setValidator(validator)
                 .build();
         objectMapper = new ObjectMapper();
     }
