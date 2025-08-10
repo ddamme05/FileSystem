@@ -7,48 +7,46 @@ import org.ddamme.dto.LoginRequest;
 import org.ddamme.dto.RegisterRequest;
 import org.ddamme.security.service.JwtService;
 import org.ddamme.service.UserService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.mockito.Mockito;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.context.annotation.Bean;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(controllers = AuthController.class, properties = {
-        "springdoc.api-docs.enabled=false",
-        "springdoc.swagger-ui.enabled=false"
-})
-@AutoConfigureMockMvc(addFilters = false)
 class AuthControllerTest {
-
-    @Autowired
     private MockMvc mockMvc;
-
-    @Autowired
     private ObjectMapper objectMapper;
-
-    @MockBean
     private UserService userService;
-
-    @MockBean
     private JwtService jwtService;
-
-    @MockBean
     private AuthenticationManager authenticationManager;
+
+    private static final LocalValidatorFactoryBean validator = new LocalValidatorFactoryBean();
+
+    @BeforeEach
+    void setup() {
+        userService = Mockito.mock(UserService.class);
+        jwtService = Mockito.mock(JwtService.class);
+        authenticationManager = Mockito.mock(AuthenticationManager.class);
+        AuthController controller = new AuthController(userService, jwtService, authenticationManager);
+        validator.afterPropertiesSet();
+        mockMvc = MockMvcBuilders.standaloneSetup(controller)
+                .setMessageConverters(new MappingJackson2HttpMessageConverter())
+                .setValidator(validator)
+                .build();
+        objectMapper = new ObjectMapper();
+    }
 
     @Test
     @DisplayName("POST /api/v1/auth/register returns token and user info")
@@ -86,13 +84,6 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.role").value("USER"));
     }
 
-    @TestConfiguration
-    static class NoOpEncoderConfig {
-        @Bean
-        public PasswordEncoder passwordEncoder() {
-            return new BCryptPasswordEncoder();
-        }
-    }
 }
 
 

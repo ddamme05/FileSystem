@@ -48,6 +48,6 @@ class FileControllerTest {
         assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().getFiles()).hasSize(1);
-        assertThat(response.getBody().getFiles().get(0).getId()).isEqualTo(1L);
+        assertThat(response.getBody().getFiles().getFirst().getId()).isEqualTo(1L);
     }
 }

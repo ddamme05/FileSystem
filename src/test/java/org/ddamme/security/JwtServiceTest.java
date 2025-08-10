@@ -14,12 +14,11 @@ import static org.assertj.core.api.Assertions.*;
 
 class JwtServiceTest {
 
-    private JwtProperties props;
     private JwtService jwtService;
 
     @BeforeEach
     void setUp() {
-        props = new JwtProperties();
+        JwtProperties props = new JwtProperties();
         props.setExpirationMs(60_000); // 1 minute
         String base64_32_bytes = "MDEyMzQ1Njc4OWFiY2RlZmdoaWprbG1uMDEyMzQ1Njc4OWFiY2RlZg=="; // 32 bytes base64
         props.setSecret(base64_32_bytes);

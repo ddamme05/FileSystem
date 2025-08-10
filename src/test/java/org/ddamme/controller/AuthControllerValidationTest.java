@@ -1,17 +1,15 @@
 package org.ddamme.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.ddamme.security.service.JwtService;
-import org.ddamme.service.UserService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.ddamme.testsupport.TestMocksConfig;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.security.authentication.AuthenticationManager;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -22,6 +20,7 @@ import org.ddamme.dto.RegisterRequest;
         "springdoc.swagger-ui.enabled=false"
 })
 @AutoConfigureMockMvc(addFilters = false)
+@Import(TestMocksConfig.class)
 class AuthControllerValidationTest {
 
     @Autowired
@@ -29,14 +28,6 @@ class AuthControllerValidationTest {
 
     @Autowired
     private ObjectMapper objectMapper;
-
-    @MockBean
-    private UserService userService;
-
-    @MockBean
-    private JwtService jwtService;
-    @MockBean
-    private AuthenticationManager authenticationManager;
 
     @Test
     @DisplayName("register returns 400 when username is blank")
