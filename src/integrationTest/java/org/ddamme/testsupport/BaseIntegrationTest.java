@@ -30,6 +30,7 @@ public abstract class BaseIntegrationTest {
         registry.add("management.health.db.enabled", () -> "false");
         registry.add("spring.datasource.hikari.maximumPoolSize", () -> "1");
         registry.add("spring.datasource.hikari.maxLifetime", () -> HIKARI_MAX_LIFETIME_FOR_TESTS);
+        registry.add("spring.jpa.open-in-view", () -> "true");
         registry.add("spring.jpa.show-sql", () -> "false");
     }
 }
