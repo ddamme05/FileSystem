@@ -1,6 +1,6 @@
 # File System Service
 
-[![CI](https://github.com/ddamme05/File-System/actions/workflows/ci.yml/badge.svg)](https://github.com/ddamme05/File-System/actions/workflows/ci.yml)
+[![CI](https://img.shields.io/github/actions/workflow/status/ddamme05/File-System/ci.yml?branch=main&label=CI)](https://github.com/ddamme05/File-System/actions/workflows/ci.yml)
 [![Architecture](https://img.shields.io/badge/docs-architecture-blue)](architecture.md)
 [![API Docs](https://img.shields.io/badge/docs-API%20Docs-blue)](docs/api.md)
 

@@ -46,7 +46,6 @@ dependencies {
 dependencyManagement {
     imports {
         mavenBom("software.amazon.awssdk:bom:2.31.72")
-        // Align Testcontainers modules
         mavenBom("org.testcontainers:testcontainers-bom:1.20.2")
     }
 }
@@ -62,10 +61,7 @@ tasks.withType<Test> {
 // Integration test source set
 sourceSets {
     create("integrationTest") {
-        java.srcDir("src/integrationTest/java")
-        resources.srcDir("src/integrationTest/resources")
         compileClasspath += sourceSets["main"].output
-        // Also include test outputs so we can reuse test support classes like TestMocksConfig
         compileClasspath += sourceSets["test"].output
         compileClasspath += configurations["testRuntimeClasspath"]
         runtimeClasspath += output

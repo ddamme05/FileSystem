@@ -21,6 +21,7 @@ spring:
   flyway:
     enabled: true
     baseline-on-migrate: true
+    clean-disabled: true
 
 server:
   port: 8080
