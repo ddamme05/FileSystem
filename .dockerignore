@@ -1,0 +1,23 @@
+# Version control
+.git
+.gitignore
+
+# Gradle
+.gradle
+build/
+!gradle/wrapper/**
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# OS artifacts
+.DS_Store
+Thumbs.db
+
+# Test reports and caches
+build/reports/
+build/test-results/
+
+
