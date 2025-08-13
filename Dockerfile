@@ -30,5 +30,6 @@ RUN (command -v dnf >/dev/null 2>&1 && dnf install -y curl && dnf clean all) \
 COPY --from=build /workspace/app/build/libs/*.jar /app/app.jar
 EXPOSE 8080
 # Default: rely on environment variables; do not read .env in container
-ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar /app/app.jar"]
+# Use exec form so JVM is PID 1 and receives signals; supply JVM flags via JAVA_TOOL_OPTIONS
+ENTRYPOINT ["java", "-jar", "/app/app.jar"]
 
