@@ -2,9 +2,15 @@ name: CI
 
 on:
   push:
-    branches: [ main, '**' ]
+    branches: [ main ]
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
   pull_request:
-    branches: [ '**' ]
+    branches: [ main ]
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -28,25 +34,21 @@ jobs:
           distribution: corretto
           java-version: '21'
 
-      - name: Setup Gradle
+      - name: Setup Gradle with caching
         uses: gradle/actions/setup-gradle@v3
 
-      - name: Docker info (for Testcontainers)
-        run: |
-          docker --version
-          docker info
 
       - name: Make gradlew executable
         run: chmod +x ./gradlew
 
-      - name: Run tests
+      - name: Run tests (with Gradle build cache and full stacktraces)
         env:
           CI: true
           TZ: UTC
-        run: ./gradlew --no-daemon clean test integrationTest
+        run: ./gradlew --no-daemon --build-cache --stacktrace --info test integrationTest
 
-      - name: Upload test reports (always)
-        if: always()
+      - name: Upload test reports (on failure)
+        if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: test-reports

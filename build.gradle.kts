@@ -56,6 +56,31 @@ tasks.test {
 
 tasks.withType<Test> {
     useJUnitPlatform()
+    testLogging {
+        // Show which tests ran and which failed in console
+        events(
+            org.gradle.api.tasks.testing.logging.TestLogEvent.PASSED,
+            org.gradle.api.tasks.testing.logging.TestLogEvent.SKIPPED,
+            org.gradle.api.tasks.testing.logging.TestLogEvent.FAILED
+        )
+        exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+        showExceptions = true
+        showCauses = true
+        showStackTraces = true
+        // Flip to true if you want System.out/err from tests
+        showStandardStreams = false
+    }
+    // Print a concise summary at the end of the test run
+    addTestListener(object : org.gradle.api.tasks.testing.TestListener {
+        override fun beforeSuite(suite: org.gradle.api.tasks.testing.TestDescriptor) {}
+        override fun beforeTest(testDescriptor: org.gradle.api.tasks.testing.TestDescriptor) {}
+        override fun afterTest(testDescriptor: org.gradle.api.tasks.testing.TestDescriptor, result: org.gradle.api.tasks.testing.TestResult) {}
+        override fun afterSuite(suite: org.gradle.api.tasks.testing.TestDescriptor, result: org.gradle.api.tasks.testing.TestResult) {
+            if (suite.parent == null) {
+                println("Results: ${result.resultType} (${result.testCount} tests, ${result.successfulTestCount} successes, ${result.failedTestCount} failures, ${result.skippedTestCount} skipped)")
+            }
+        }
+    })
 }
 
 // Integration test source set
@@ -79,6 +104,8 @@ tasks.register<Test>("integrationTest") {
     classpath = sourceSets["integrationTest"].runtimeClasspath
     useJUnitPlatform()
     shouldRunAfter("test")
+    // Always run integration tests, regardless of up-to-date checks
+    outputs.upToDateWhen { false }
 }
 
 tasks.check { dependsOn("integrationTest") }

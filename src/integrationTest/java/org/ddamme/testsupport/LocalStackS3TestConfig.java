@@ -19,29 +19,33 @@ public class LocalStackS3TestConfig {
     @Container
     public static final LocalStackContainer LOCALSTACK = new LocalStackContainer(
             DockerImageName.parse("localstack/localstack:3.6")
-    ).withServices(LocalStackContainer.Service.S3);
+    ).withServices(LocalStackContainer.Service.S3).withReuse(true);
 
-    static {
-        LOCALSTACK.start();
+    @Bean
+    public LocalStackContainer localstackContainerBean() {
+        if (!LOCALSTACK.isRunning()) {
+            LOCALSTACK.start();
+        }
+        return LOCALSTACK;
     }
 
     @Bean
     @Primary
-    public S3Client s3ClientOverride() {
+    public S3Client s3ClientOverride(LocalStackContainer container) {
         return S3Client.builder()
                 .credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create("test", "test")))
-                .region(Region.of(LOCALSTACK.getRegion()))
-                .endpointOverride(URI.create(LOCALSTACK.getEndpointOverride(LocalStackContainer.Service.S3).toString()))
+                .region(Region.of(container.getRegion()))
+                .endpointOverride(URI.create(container.getEndpointOverride(LocalStackContainer.Service.S3).toString()))
                 .build();
     }
 
     @Bean
     @Primary
-    public S3Presigner s3PresignerOverride() {
+    public S3Presigner s3PresignerOverride(LocalStackContainer container) {
         return S3Presigner.builder()
                 .credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create("test", "test")))
-                .region(Region.of(LOCALSTACK.getRegion()))
-                .endpointOverride(URI.create(LOCALSTACK.getEndpointOverride(LocalStackContainer.Service.S3).toString()))
+                .region(Region.of(container.getRegion()))
+                .endpointOverride(URI.create(container.getEndpointOverride(LocalStackContainer.Service.S3).toString()))
                 .build();
     }
 }
