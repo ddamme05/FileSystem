@@ -113,8 +113,6 @@ class FileControllerS3IT extends BaseIntegrationTest {
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isNoContent());
     }
-
-    // Beans provided by LocalStackS3TestConfig
 }
 
 

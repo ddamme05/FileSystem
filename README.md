@@ -36,10 +36,16 @@ Authentication: Click "Authorize" in Swagger and paste `Bearer <JWT>` after obta
 docker compose up -d postgres-db
 ```
 
-2) Run the app
+2) Run the app (Dev)
 
 ```bash
 ./gradlew bootRun
+```
+
+Or with Docker Compose (reads `docs/env.example`):
+
+```bash
+docker compose up -d --build app
 ```
 
 3) Test auth and files
@@ -51,7 +57,7 @@ docker compose up -d postgres-db
 - Download URL: `GET /files/download/{id}`
 - Delete: `DELETE /files/{id}`
 
-Default config is in `src/main/resources/application.yml`. Override in prod via env vars.
+Default config is in `src/main/resources/application.yml`. For dev/local, env is loaded via Compose `env_file` only. In production, pass env vars explicitly; the container does not read `.env` files.
 
 More details: see `docs/api.md`.
  
