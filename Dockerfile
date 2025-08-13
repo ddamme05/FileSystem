@@ -27,9 +27,10 @@ RUN (command -v dnf >/dev/null 2>&1 && dnf install -y curl && dnf clean all) \
  || (command -v apk >/dev/null 2>&1 && apk add --no-cache curl) \
  || (command -v apt-get >/dev/null 2>&1 && apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*) \
  || true
-COPY --from=build /workspace/app/build/libs/*.jar /app/app.jar
+COPY --from=build /workspace/app/build/libs/*.jar /app/
+# Pick the bootable jar (exclude the plain jar) and rename to app.jar
+RUN set -e; jar=$(ls /app/*.jar | grep -v 'plain.jar' | head -n 1); mv "$jar" /app/app.jar; rm -f /app/*-plain.jar
 EXPOSE 8080
-# Default: rely on environment variables; do not read .env in container
-# Use exec form so JVM is PID 1 and receives signals; supply JVM flags via JAVA_TOOL_OPTIONS
+
 ENTRYPOINT ["java", "-jar", "/app/app.jar"]
 
