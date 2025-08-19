@@ -6,6 +6,11 @@ build/
 PROJECT_PLAN.md
 .env
 
+# Secrets directory - NEVER commit secrets!
+.secrets/
+*.key
+*.pem
+
 ### IntelliJ IDEA ###
 .idea/modules.xml
 .idea/jarRepositories.xml

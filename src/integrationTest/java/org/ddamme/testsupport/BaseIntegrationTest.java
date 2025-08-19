@@ -19,7 +19,7 @@ public abstract class BaseIntegrationTest {
 					.withDatabaseName("file_system_it")
 					.withUsername("user")
 					.withPassword("password")
-					.withReuse(true);
+					.withReuse(Boolean.parseBoolean(System.getenv().getOrDefault("TC_REUSE", "false")));
 
 	private static final String HIKARI_MAX_LIFETIME_FOR_TESTS = "10000";
 

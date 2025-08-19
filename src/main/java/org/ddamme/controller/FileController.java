@@ -1,5 +1,6 @@
 package org.ddamme.controller;
 import io.swagger.v3.oas.annotations.Operation;
+import lombok.extern.slf4j.Slf4j;
 
 import lombok.RequiredArgsConstructor;
 import org.ddamme.database.model.FileMetadata;
@@ -23,10 +24,13 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.Map;
+import org.ddamme.logging.AuditLogger;
 
 @RestController
 @RequestMapping("/files")
 @RequiredArgsConstructor
+@Slf4j
 public class FileController {
 
     private final MetadataService metadataService;
@@ -36,10 +40,11 @@ public class FileController {
     @Operation(summary = "Upload a file to storage and create metadata")
     public ResponseEntity<FileUploadResponse> uploadFile(@RequestPart("file") MultipartFile file, @AuthenticationPrincipal User currentUser) {
 
-        // 2. Upload the file to storage and get the storage key
+        log.info("Received file upload request - filename: {}, size: {}, contentType: {}", 
+                file.getOriginalFilename(), file.getSize(), file.getContentType());
+
         String storageKey = storageService.upload(file);
 
-        // 3. Create metadata record with user association
         FileMetadata metadata = FileMetadata.builder()
                 .originalFilename(file.getOriginalFilename())
                 .storageKey(storageKey)
@@ -48,10 +53,8 @@ public class FileController {
                 .user(currentUser)
                 .build();
 
-        // 4. Save metadata to database
         FileMetadata savedMetadata = metadataService.save(metadata);
 
-        // 5. Create clean response DTO (no sensitive user data)
         FileUploadResponse response = FileUploadResponse.builder()
                 .id(savedMetadata.getId())
                 .originalFilename(savedMetadata.getOriginalFilename())
@@ -63,54 +66,47 @@ public class FileController {
                 .updateTimestamp(savedMetadata.getUpdateTimestamp())
                 .build();
 
-        // 6. Return clean response
+        AuditLogger.log("file_upload", Map.of(
+                "user", currentUser.getUsername(),
+                "file", savedMetadata.getOriginalFilename(),
+                "id", savedMetadata.getId(),
+                "size", savedMetadata.getSize()
+        ));
+
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/download/{id}")
     @Operation(summary = "Generate a presigned download URL for your file")
     public ResponseEntity<DownloadUrlResponse> downloadFile(@PathVariable Long id, @AuthenticationPrincipal User currentUser) {
-        
-        // 2. Get metadata from database
-        FileMetadata metadata = metadataService.findById(id);
-        
-        // 3. Verify user owns this file
-        if (metadata.getUser() == null) {
-            throw new AccessDeniedException("File has no owner - access denied");
-        }
-        if (!metadata.getUser().getId().equals(currentUser.getId())) {
-            throw new AccessDeniedException("You can only access your own files");
-        }
+        FileMetadata metadata = metadataService.findOwnedById(currentUser, id);
 
-        // 4. Generate presigned download URL
         String downloadUrl = storageService.generatePresignedDownloadUrl(metadata.getStorageKey());
 
-        // 5. Return the URL
+        AuditLogger.log("file_download_url", Map.of(
+                "user", currentUser.getUsername(),
+                "id", metadata.getId(),
+                "storageKey", metadata.getStorageKey()
+        ));
+
         return ResponseEntity.ok(DownloadUrlResponse.builder().downloadUrl(downloadUrl).build());
     }
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Delete your file")
     public ResponseEntity<?> deleteFile(@PathVariable Long id, @AuthenticationPrincipal User currentUser) {
-        
-        // 2. Get metadata from database
-        FileMetadata metadata = metadataService.findById(id);
-        
-        // 3. Verify user owns this file
-        if (metadata.getUser() == null) {
-            throw new AccessDeniedException("File has no owner - access denied");
-        }
-        if (!metadata.getUser().getId().equals(currentUser.getId())) {
-            throw new AccessDeniedException("You can only delete your own files");
-        }
+        FileMetadata metadata = metadataService.findOwnedById(currentUser, id);
 
-        // 4. Delete file from storage
         storageService.delete(metadata.getStorageKey());
 
-        // 5. Delete metadata record from database
         metadataService.deleteById(id);
 
-        // 6. Return 204 No Content
+        AuditLogger.log("file_delete", Map.of(
+                "user", currentUser.getUsername(),
+                "id", id,
+                "storageKey", metadata.getStorageKey()
+        ));
+
         return ResponseEntity.noContent().build();
     }
 
@@ -121,13 +117,10 @@ public class FileController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
         
-        // 1. Create pageable request (page 0-based, size = items per page)
         Pageable pageable = PageRequest.of(page, size);
         
-        // 2. Get paginated files for this user
         Page<FileMetadata> userFilesPage = metadataService.findByUser(currentUser, pageable);
         
-        // 3. Convert to clean DTOs (no sensitive data)
         List<FileListResponse> files = userFilesPage.getContent().stream()
                 .map(file -> FileListResponse.builder()
                         .id(file.getId())
@@ -138,7 +131,6 @@ public class FileController {
                         .build())
                 .collect(Collectors.toList());
         
-        // 4. Build paginated response
         PagedFileResponse response = PagedFileResponse.builder()
                 .files(files)
                 .currentPage(userFilesPage.getNumber())
@@ -148,7 +140,6 @@ public class FileController {
                 .hasPrevious(userFilesPage.hasPrevious())
                 .build();
         
-        // 5. Return the paginated list
         return ResponseEntity.ok(response);
     }
 } 

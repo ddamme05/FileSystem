@@ -19,7 +19,8 @@ public class LocalStackS3TestConfig {
     @Container
     public static final LocalStackContainer LOCALSTACK = new LocalStackContainer(
             DockerImageName.parse("localstack/localstack:3.6")
-    ).withServices(LocalStackContainer.Service.S3).withReuse(true);
+    ).withServices(LocalStackContainer.Service.S3)
+     .withReuse(Boolean.parseBoolean(System.getenv().getOrDefault("TC_REUSE", "false")));
 
     @Bean
     public LocalStackContainer localstackContainerBean() {
