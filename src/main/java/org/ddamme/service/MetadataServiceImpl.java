@@ -12,7 +12,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import io.micrometer.observation.annotation.Observed;
-import io.micrometer.observation.annotation.Observed;
 import org.ddamme.exception.AccessDeniedException;
 
 @Service
@@ -71,4 +70,4 @@ public class MetadataServiceImpl implements MetadataService {
     public Page<FileMetadata> findByUser(User user, Pageable pageable) {
         return metadataRepository.findByUserOrderByUploadTimestampDesc(user, pageable);
     }
-} 
+}
