@@ -3,19 +3,18 @@
 set -eu  # no -E, no pipefail in POSIX sh
 
 read_secret() {
-  local secret_file="$1"
-  if [ ! -f "$secret_file" ]; then
-    echo "Error: Secret file $secret_file not found" >&2
+  _read_secret_file="$1"
+  if [ ! -f "$_read_secret_file" ]; then
+    echo "Error: Secret file $_read_secret_file not found" >&2
     exit 1
   fi
   # strips both \r and \n if present
-  local value
-  value=$(tr -d '\r\n' < "$secret_file")
-  if [ -z "$value" ]; then
-    echo "Error: Secret file $secret_file is empty" >&2
+  _read_secret_value=$(tr -d '\r\n' < "$_read_secret_file")
+  if [ -z "$_read_secret_value" ]; then
+    echo "Error: Secret file $_read_secret_file is empty" >&2
     exit 1
   fi
-  echo "$value"
+  echo "$_read_secret_value"
 }
 
 # Read secrets with validation
