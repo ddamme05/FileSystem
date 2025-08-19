@@ -16,6 +16,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import org.slf4j.MDC;
 
 @Component
 @RequiredArgsConstructor
@@ -30,24 +31,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             @NonNull HttpServletResponse response,
             @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
-        // 1. Get the Authorization header from the request
         final String authHeader = request.getHeader("Authorization");
 
-        // 2. If the header is null or doesn't start with "Bearer ", pass to the next filter
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        // 3. Extract the JWT from the header
         final String jwtToken = authHeader.substring(7);
         final String username = jwtService.extractUsername(jwtToken);
 
-        // 4. If we have a username and the user is not already authenticated
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
 
-            // 5. If the token is valid, update the SecurityContext
             if (jwtService.isTokenValid(jwtToken, userDetails)) {
                 UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                         userDetails,
@@ -56,10 +52,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 );
                 authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authToken);
+                MDC.put("user", userDetails.getUsername());
             }
         }
 
-        // 6. Pass the request to the next filter in the chain
-        filterChain.doFilter(request, response);
+        try {
+            filterChain.doFilter(request, response);
+        } finally {
+            MDC.remove("user");
+        }
     }
 } 

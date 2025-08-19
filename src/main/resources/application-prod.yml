@@ -8,9 +8,26 @@ spring:
       ddl-auto: validate
     show-sql: false
 management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
   datadog:
     metrics:
       export:
         enabled: true
         api-key: ${DD_API_KEY}
         uri: ${DD_URI:https://api.datadoghq.com} 
+  metrics:
+    tags:
+      application: ${spring.application.name}
+      service: ${DD_SERVICE:file-system}
+      env: ${DD_ENV:prod}
+      version: ${DD_VERSION:1.0.0}
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true

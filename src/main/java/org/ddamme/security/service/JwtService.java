@@ -11,7 +11,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import java.util.Base64;
-import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.function.Function;
 
@@ -31,8 +30,12 @@ public class JwtService {
         byte[] keyBytes;
         try {
             keyBytes = Base64.getDecoder().decode(configuredSecret);
-        } catch (IllegalArgumentException ex) {
-            throw new IllegalStateException("SECURITY_JWT_SECRET must be base64-encoded", ex);
+        } catch (IllegalArgumentException exStandard) {
+            try {
+                keyBytes = Base64.getUrlDecoder().decode(configuredSecret);
+            } catch (IllegalArgumentException exUrl) {
+                throw new IllegalStateException("SECURITY_JWT_SECRET must be base64-encoded (standard or URL-safe)", exUrl);
+            }
         }
         if (keyBytes.length < 32) {
             throw new IllegalStateException("SECURITY_JWT_SECRET must be at least 32 bytes (256 bits)");

@@ -17,6 +17,7 @@ import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequ
 import java.io.IOException;
 import java.time.Duration;
 import java.util.UUID;
+import io.micrometer.observation.annotation.Observed;
 
 @Service
 @RequiredArgsConstructor
@@ -25,8 +26,10 @@ public class S3StorageService implements StorageService {
     private final S3Client s3Client;
     private final S3Presigner s3Presigner;
     private final AwsProperties awsProperties;
+    
 
     @Override
+    @Observed(name = "s3.upload")
     public String upload(MultipartFile file) {
         String bucketName = awsProperties.getS3().getBucketName();
         String storageKey = generateStorageKey(file.getOriginalFilename());
@@ -51,6 +54,7 @@ public class S3StorageService implements StorageService {
     }
 
     @Override
+    @Observed(name = "s3.presign")
     public String generatePresignedDownloadUrl(String storageKey) {
         String bucketName = awsProperties.getS3().getBucketName();
 
@@ -63,12 +67,12 @@ public class S3StorageService implements StorageService {
                 .signatureDuration(Duration.ofMinutes(5))
                 .getObjectRequest(getObjectRequest)
                 .build();
-
         PresignedGetObjectRequest presignedRequest = s3Presigner.presignGetObject(getObjectPresignRequest);
         return presignedRequest.url().toString();
     }
 
     @Override
+    @Observed(name = "s3.delete")
     public void delete(String storageKey) {
         String bucketName = awsProperties.getS3().getBucketName();
 
@@ -76,7 +80,6 @@ public class S3StorageService implements StorageService {
                 .bucket(bucketName)
                 .key(storageKey)
                 .build();
-
         s3Client.deleteObject(deleteObjectRequest);
     }
 } 
