@@ -1,64 +1,127 @@
 # File System Service
 
-[![CI](https://img.shields.io/github/actions/workflow/status/ddamme05/File-System/ci.yml?branch=main&label=CI)](https://github.com/ddamme05/File-System/actions/workflows/ci.yml)
 [![Architecture](https://img.shields.io/badge/docs-architecture-blue)](architecture.md)
 [![API Docs](https://img.shields.io/badge/docs-API%20Docs-blue)](docs/api.md)
 
-## 🚧 Work in Progress 🚧
+A secure file storage service built with Spring Boot, featuring JWT authentication, AWS S3 storage, and PostgreSQL database with comprehensive observability.
 
-Welcome to my File System Service project!
+## 🏗️ What's Included
 
-### About This Project
+- **REST API** with OpenAPI/Swagger documentation
+- **JWT Authentication** with user registration/login
+- **File Management** - upload, download (presigned URLs), delete, list
+- **AWS S3 Integration** for scalable file storage
+- **PostgreSQL Database** with Flyway migrations
+- **Security** - file ownership validation, read-only containers
+- **Observability** - Datadog APM, metrics, structured logging
+- **Testing** - Unit tests + Integration tests with Testcontainers
+- **Docker** - Multi-stage builds with security hardening
 
-This project is my hands-on lab for learning and mastering a variety of modern backend technologies, including:
+## 🚀 Quick Start
 
--   **Java & Spring Boot:** Building a robust REST API.
--   **Spring Data JPA:** Interacting with a PostgreSQL database.
--   **AWS S3:** For scalable, cloud-based file storage.
--   **Spring Security:** Implementing JWT-based authentication and authorization.
--   **Docker:** Containerizing the application for consistent development and deployment.
--   **CI/CD Principles:** Setting up a pipeline for automated builds and testing. (Maybe)
+### Prerequisites
+- Java 21+
+- Docker & Docker Compose
+- (Optional) AWS S3 bucket for production
 
-As I learn, I'll be implementing new features and refactoring existing code. The primary goal is education and practical experience, so you'll see the project evolve over time.
-
-## API Docs
-
-- Swagger UI: `/swagger-ui/index.html`
-- OpenAPI JSON: `/v3/api-docs`
-
-Authentication: Click "Authorize" in Swagger and paste `Bearer <JWT>` after obtaining a token via `POST /api/v1/auth/login` or `POST /api/v1/auth/register`.
-
-## Quickstart (Local)
-
-1) Start Postgres
-
+### 1. Setup Secrets
 ```bash
+# Windows
+.\setup-secrets.ps1
+
+# Linux/macOS  
+./load-secrets.sh
+```
+
+### 2. Start Services
+```bash
+# Start database only
 docker compose up -d postgres-db
+
+# Or start everything (app + db + monitoring)
+docker compose up -d --build
 ```
 
-2) Run the app (Dev)
-
+### 3. Run Application
 ```bash
+# Development mode (local Java)
 ./gradlew bootRun
+
+# Or use Docker (production-like)
+docker compose up -d app
 ```
 
-Or with Docker Compose (reads `docs/env.example`):
+##  Docker Commands
 
 ```bash
-docker compose up -d --build app
+# Build and start all services
+docker compose up -d --build
+
+# View logs
+docker compose logs -f app
+docker compose logs -f postgres-db
+
+# Stop services
+docker compose down
+
+# Clean up (removes volumes)
+docker compose down -v
 ```
 
-3) Test auth and files
+## 🔨 Gradle Commands
 
-- Register: `POST /api/v1/auth/register`
-- Login: `POST /api/v1/auth/login`
-- Upload: `POST /files/upload` (multipart form, field `file`)
-- List: `GET /files`
-- Download URL: `GET /files/download/{id}`
-- Delete: `DELETE /files/{id}`
+```bash
+# Run application locally
+./gradlew bootRun
 
-Default config is in `src/main/resources/application.yml`. For dev/local, env is loaded via Compose `env_file` only. In production, pass env vars explicitly; the container does not read `.env` files.
+# Run tests
+./gradlew test integrationTest
 
-More details: see `docs/api.md`.
- 
-Example environment file: see `docs/env.example`.
+# Build
+./gradlew build
+```
+
+## 📖 API Documentation
+
+- **Swagger UI:** http://localhost:8080/swagger-ui/index.html
+- **OpenAPI JSON:** http://localhost:8080/v3/api-docs
+
+## 🔧 Configuration
+
+### Profiles
+- `dev` (default) - Local development
+- `prod` - Production with enhanced security
+- `integrationTest` - Test profile with Testcontainers
+
+## 🏥 Health & Monitoring
+
+```bash
+# Health check
+curl http://localhost:8080/actuator/health
+
+# Metrics (Prometheus format)
+curl http://localhost:8080/actuator/prometheus
+```
+
+## 🔒 Security Features
+
+- JWT-based authentication with secure key management
+- File ownership validation (users can only access their files)
+- Read-only containers with dropped capabilities
+- Secret management via Docker secrets
+- SQL injection prevention with JPA/Hibernate
+- CORS protection and security headers
+
+## 🚧 Development Status
+
+This is a learning project focused on modern backend development practices. Features are continuously being added and refined as I explore new technologies and patterns.
+
+**Current Tech Stack:**
+- Java 21 + Spring Boot 3.5
+- PostgreSQL 17 + Flyway migrations  
+- AWS S3 + presigned URLs
+- Docker + Docker Compose
+- Datadog APM + structured logging
+- JUnit 5 + Testcontainers
+- Gradle build system
+- GitHub Actions CI/CD
