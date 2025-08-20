@@ -24,9 +24,9 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-aop")
     implementation("net.logstash.logback:logstash-logback-encoder:7.4")
     implementation("io.micrometer:micrometer-registry-prometheus")
+    implementation("io.micrometer:micrometer-registry-statsd")
     implementation("org.flywaydb:flyway-core")
     implementation("org.flywaydb:flyway-database-postgresql")
-    implementation("io.micrometer:micrometer-registry-datadog")
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.9")
     implementation("software.amazon.awssdk:s3")
     implementation("io.jsonwebtoken:jjwt-api:0.12.6")
@@ -50,10 +50,6 @@ dependencyManagement {
         mavenBom("software.amazon.awssdk:bom:2.31.72")
         mavenBom("org.testcontainers:testcontainers-bom:1.20.2")
     }
-}
-
-tasks.test {
-    useJUnitPlatform()
 }
 
 tasks.withType<Test> {
@@ -83,6 +79,16 @@ tasks.withType<Test> {
             }
         }
     })
+}
+
+// Disable plain JAR generation to simplify Docker build
+tasks.named<Jar>("jar") {
+    enabled = false
+}
+
+// Set deterministic boot JAR name
+tasks.bootJar {
+    archiveFileName.set("app.jar")
 }
 
 sourceSets {
