@@ -2,6 +2,9 @@
 # POSIX-safe: works in ash/dash/bash/ksh
 set -eu  # no -E, no pipefail in POSIX sh
 
+# Set conservative umask for any future files
+umask 077
+
 read_secret() {
   _read_secret_file="$1"
   if [ ! -f "$_read_secret_file" ]; then
@@ -17,7 +20,7 @@ read_secret() {
   echo "$_read_secret_value"
 }
 
-# Read secrets with validation
+# Read secrets with validation (as root)
 SPRING_DATASOURCE_PASSWORD="$(read_secret /run/secrets/db_password)"
 SECURITY_JWT_SECRET="$(read_secret /run/secrets/jwt_secret)"
 AWS_S3_BUCKET="$(read_secret /run/secrets/aws_s3_bucket)"
@@ -33,4 +36,16 @@ export AWS_REGION
 export AWS_ACCESS_KEY_ID
 export AWS_SECRET_ACCESS_KEY
 
-exec java -jar /app/app.jar "$@"
+# Drop privileges and start Java app with safer fallbacks
+if command -v setpriv >/dev/null 2>&1; then
+  # Try with --init-groups first, fall back to --clear-groups if unsupported
+  if setpriv --reuid 10001 --regid 10001 --init-groups true 2>/dev/null; then
+    exec setpriv --reuid 10001 --regid 10001 --init-groups java -jar /app/app.jar "$@"
+  else
+    exec setpriv --reuid 10001 --regid 10001 --clear-groups java -jar /app/app.jar "$@"
+  fi
+elif command -v runuser >/dev/null 2>&1; then
+  exec runuser -u appuser -- java -jar /app/app.jar "$@"
+else
+  exec su -s /bin/sh -c 'exec java -jar /app/app.jar "$@"' appuser -- "$@"
+fi

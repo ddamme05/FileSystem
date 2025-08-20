@@ -1,23 +1,16 @@
-# Version control
 .git
-.gitignore
-
-# Gradle
 .gradle
-build/
+build
+out
+**/*.iml
+.gradle/
+**/.DS_Store
+.secrets/
+*.log
+README.md
+LICENSE
+docs/
+# Keep the Gradle wrapper (required for docker builds)
+!gradlew
 !gradle/wrapper/**
-
-# IDE
-.idea/
-*.iml
-.vscode/
-
-# OS artifacts
-.DS_Store
-Thumbs.db
-
-# Test reports and caches
-build/reports/
-build/test-results/
-
 

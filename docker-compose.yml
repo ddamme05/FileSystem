@@ -1,5 +1,3 @@
-version: '3.8'
-
 secrets:
   dd_api_key:
     file: ./.secrets/dd_api_key
@@ -7,8 +5,6 @@ secrets:
     file: ./.secrets/dd_site
   db_password:
     file: ./.secrets/db_password
-  dd_pg_password:
-    file: ./.secrets/dd_pg_password
   jwt_secret:
     file: ./.secrets/jwt_secret
   aws_s3_bucket:
@@ -24,37 +20,20 @@ services:
   postgres-db:
     image: postgres:17-alpine
     container_name: file-system-postgres
-    ports:
-      - "5433:5432"
+    restart: unless-stopped
+    ports: ["5433:5432"]
     environment:
       - POSTGRES_USER=user
       - POSTGRES_PASSWORD_FILE=/run/secrets/db_password
       - POSTGRES_DB=file_system_db
-    secrets:
-      - db_password
-      - dd_pg_password
+    secrets: [db_password]
     volumes:
       - postgres-data:/var/lib/postgresql/data
-    command: [
-      "postgres",
+    command: ["postgres",
       "-c","shared_preload_libraries=pg_stat_statements",
       "-c","pg_stat_statements.max=10000",
       "-c","pg_stat_statements.track=all",
-      "-c","track_activity_query_size=2048"
-    ]
-    labels:
-      com.datadoghq.ad.check_names: '["postgres"]'
-      com.datadoghq.ad.init_configs: '[{}]'
-      com.datadoghq.ad.instances: >-
-        [{
-          "dbm": true,
-          "host":"%%host%%",
-          "port":5432,
-          "username":"datadog",
-          "password_file":"/run/secrets/dd_pg_password",
-          "collect_wal_metrics": false
-        }]
-      com.datadoghq.ad.logs: '[{"source":"postgresql","service":"postgres-db"}]'
+      "-c","track_activity_query_size=2048"]
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U user -d file_system_db -q"]
       interval: 10s
@@ -65,32 +44,37 @@ services:
     build: .
     image: file-system-app:local
     container_name: file-system-app
+    restart: unless-stopped
+    stop_grace_period: 20s
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /var/tmp
+    cap_drop: [ALL]
+    cap_add: [SETUID, SETGID]
+    security_opt:
+      - no-new-privileges:true
+    init: true
     depends_on:
       postgres-db:
         condition: service_healthy
-      datadog:
-        condition: service_started
-    ports:
-      - "8080:8080"
+    ports: ["8080:8080"]
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/file_system_db
-      SPRING_DATASOURCE_USERNAME: user
-      SPRING_PROFILES_ACTIVE: dev
-      
-      # Datadog Configuration
+      JAVA_TOOL_OPTIONS: "-javaagent:/app/dd-java-agent.jar ${JAVA_TOOL_OPTIONS:-} -XX:MaxRAMPercentage=75.0"
+      DD_AGENT_HOST: datadog
       DD_SERVICE: file-system-app
       DD_ENV: dev
       DD_VERSION: "1.0.0"
-      DD_AGENT_HOST: datadog
       DD_LOGS_INJECTION: "true"
-      
-      # Metrics Configuration
       MANAGEMENT_METRICS_EXPORT_STATSD_ENABLED: "true"
       MANAGEMENT_METRICS_EXPORT_STATSD_FLAVOR: datadog
       MANAGEMENT_METRICS_EXPORT_STATSD_HOST: datadog
       MANAGEMENT_METRICS_EXPORT_STATSD_PORT: "8125"
-    # Override the Dockerfile entrypoint to use our secrets loading script
-    entrypoint: ["/app/load-secrets.sh"]
+      MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED: "true"
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/file_system_db
+      SPRING_DATASOURCE_USERNAME: user
+      SPRING_PROFILES_ACTIVE: dev
+      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: "health,info,metrics,prometheus"
     secrets:
       - db_password
       - jwt_secret
@@ -107,16 +91,15 @@ services:
     labels:
       com.datadoghq.ad.logs: '[{"source":"java","service":"file-system-app"}]'
 
-
   datadog:
     image: gcr.io/datadoghq/agent:7
     container_name: datadog-agent
-    # read secrets -> export -> start agent
+    restart: unless-stopped
     entrypoint: ["/bin/sh","-lc"]
     command:
       - >
-        DD_API_KEY="$(tr -d '\r\n' < /run/secrets/dd_api_key)"
-        DD_SITE="$(tr -d '\r\n' < /run/secrets/dd_site)"
+        export DD_API_KEY="$(tr -d '\r\n' < /run/secrets/dd_api_key)";
+        export DD_SITE="$(tr -d '\r\n' < /run/secrets/dd_site)";
         exec /init
     environment:
       DD_ENV: dev
@@ -128,10 +111,7 @@ services:
       DD_DOGSTATSD_NON_LOCAL_TRAFFIC: "true"
       DD_DOCKER_LABELS_AS_TAGS: '{"com.docker.compose.service":"service","com.docker.compose.project":"project"}'
       DD_PROCESS_AGENT_ENABLED: "false"
-    secrets:
-      - dd_api_key
-      - dd_site
-      - dd_pg_password
+    secrets: [dd_api_key, dd_site]
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - /proc/:/host/proc/:ro
