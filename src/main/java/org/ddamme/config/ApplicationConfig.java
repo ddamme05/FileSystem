@@ -1,10 +1,6 @@
 package org.ddamme.config;
 
 import lombok.RequiredArgsConstructor;
-import org.ddamme.database.model.Role;
-import org.ddamme.database.model.User;
-import org.ddamme.database.repository.UserRepository;
-import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -36,19 +32,4 @@ public class ApplicationConfig {
         return config.getAuthenticationManager();
     }
 
-    @Bean
-    public CommandLineRunner commandLineRunner(UserRepository userRepository, PasswordEncoder passwordEncoder) {
-        return args -> {
-            if (userRepository.findByUsername("first").isEmpty()) {
-                var user = User
-                        .builder()
-                        .username("first")
-                        .email("first@example.com")
-                        .password(passwordEncoder.encode("password"))
-                        .role(Role.USER)
-                        .build();
-                userRepository.save(user);
-            }
-        };
-    }
 } 
