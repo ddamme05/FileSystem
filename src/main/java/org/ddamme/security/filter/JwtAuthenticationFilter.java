@@ -17,9 +17,12 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import org.slf4j.MDC;
+import lombok.extern.slf4j.Slf4j;
+import io.jsonwebtoken.JwtException;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
@@ -38,22 +41,26 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
-        final String jwtToken = authHeader.substring(7);
-        final String username = jwtService.extractUsername(jwtToken);
+        try {
+            final String jwtToken = authHeader.substring(7);
+            final String username = jwtService.extractUsername(jwtToken);
 
-        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
+            if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
 
-            if (jwtService.isTokenValid(jwtToken, userDetails)) {
-                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                        userDetails,
-                        null,
-                        userDetails.getAuthorities()
-                );
-                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(authToken);
-                MDC.put("user", userDetails.getUsername());
+                if (jwtService.isTokenValid(jwtToken, userDetails)) {
+                    UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                            userDetails,
+                            null,
+                            userDetails.getAuthorities()
+                    );
+                    authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    SecurityContextHolder.getContext().setAuthentication(authToken);
+                    MDC.put("user", userDetails.getUsername());
+                }
             }
+        } catch (JwtException e) {
+            log.debug("Invalid JWT token: {}", e.getMessage());
         }
 
         try {
