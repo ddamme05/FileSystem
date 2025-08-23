@@ -1,89 +1,132 @@
 package org.ddamme.security.service;
 
-import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import jakarta.annotation.PostConstruct;
-import lombok.RequiredArgsConstructor;
-import org.ddamme.security.properties.JwtProperties;
-import org.springframework.stereotype.Service;
+import io.jsonwebtoken.Jws;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
+import io.jsonwebtoken.io.Decoders;
+import io.jsonwebtoken.security.Keys;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import javax.crypto.SecretKey;
-import javax.crypto.spec.SecretKeySpec;
-import java.util.Base64;
+import java.time.Instant;
 import java.util.Date;
-import java.util.function.Function;
+import java.util.Map;
+import java.util.Objects;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
 
 @Service
-@RequiredArgsConstructor
 public class JwtService {
 
-    private final JwtProperties jwtProperties;
-    private SecretKey secretKey;
+    @Value("${security.jwt.secret}")
+    private String jwtSecretBase64; // base64-encoded
 
-    @PostConstruct
-    public void initializeSecretKey() {
-        String configuredSecret = jwtProperties.getSecret();
-        if (configuredSecret == null || configuredSecret.isBlank()) {
-            throw new IllegalStateException("SECURITY_JWT_SECRET must be set to a base64-encoded key (>= 256 bits)");
+    @Value("${security.jwt.expiration-ms:86400000}")
+    private long tokenExpirationMilliseconds;
+
+    @Value("${security.jwt.issuer:file-system}")
+    private String issuer;
+
+    // Small leeway for clock differences (seconds)
+    @Value("${security.jwt.clock-skew-seconds:30}")
+    private long clockSkewToleranceSeconds;
+
+    private volatile SecretKey cachedSigningKey;
+
+    private SecretKey signingKey() {
+        SecretKey existingSigningKey = cachedSigningKey;
+        if (existingSigningKey != null) return existingSigningKey;
+
+        if (jwtSecretBase64 == null || jwtSecretBase64.isBlank()) {
+            throw new IllegalStateException(
+                "JWT secret is missing/blank. Provide SECURITY_JWT_SECRET as a base64-encoded value.");
         }
-        byte[] keyBytes;
+        byte[] decodedSecretKeyBytes;
         try {
-            keyBytes = Base64.getDecoder().decode(configuredSecret);
-        } catch (IllegalArgumentException exStandard) {
-            try {
-                keyBytes = Base64.getUrlDecoder().decode(configuredSecret);
-            } catch (IllegalArgumentException exUrl) {
-                throw new IllegalStateException("SECURITY_JWT_SECRET must be base64-encoded (standard or URL-safe)", exUrl);
-            }
+            decodedSecretKeyBytes = Decoders.BASE64.decode(jwtSecretBase64);
+        } catch (IllegalArgumentException ex) {
+            throw new IllegalStateException(
+                "JWT secret must be base64-encoded. Update SECURITY_JWT_SECRET.", ex);
         }
-        if (keyBytes.length < 32) {
-            throw new IllegalStateException("SECURITY_JWT_SECRET must be at least 32 bytes (256 bits)");
+        if (decodedSecretKeyBytes.length < 32) { // 256 bits minimum for HS256
+            throw new IllegalStateException(
+                "JWT secret too short. Need ≥ 32 bytes (256 bits) after base64 decode.");
         }
-        this.secretKey = new SecretKeySpec(keyBytes, "HmacSHA256");
+        existingSigningKey = Keys.hmacShaKeyFor(decodedSecretKeyBytes);
+        cachedSigningKey = existingSigningKey;
+        return existingSigningKey;
     }
 
-    private SecretKey getSecretKey() {
-        return secretKey;
-    }
+    /** Build a token for a principal (usually username or userId). */
+    public String generateToken(String subject, Map<String, ?> extraClaims) {
+        Objects.requireNonNull(subject, "subject must not be null");
+        Instant currentTimestamp = Instant.now();
+        Instant expirationTimestamp = currentTimestamp.plusMillis(tokenExpirationMilliseconds);
 
-    public String extractUsername(String token) {
-        return extractClaim(token, Claims::getSubject);
-    }
+        var builder = Jwts.builder()
+                .issuer(issuer)
+                .subject(subject)
+                .issuedAt(Date.from(currentTimestamp))
+                .expiration(Date.from(expirationTimestamp));
 
-    public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
-        final Claims claims = extractAllClaims(token);
-        return claimsResolver.apply(claims);
-    }
+        if (extraClaims != null && !extraClaims.isEmpty()) {
+            extraClaims.forEach(builder::claim);
+        }
 
-    public String generateToken(UserDetails userDetails) {
-        long now = System.currentTimeMillis();
-        return Jwts.builder()
-                .subject(userDetails.getUsername())
-                .issuedAt(new Date(now))
-                .expiration(new Date(now + jwtProperties.getExpirationMs()))
-                .signWith(getSecretKey())
+        return builder
+                .signWith(signingKey(), Jwts.SIG.HS256)
                 .compact();
     }
 
-    public boolean isTokenValid(String token, UserDetails userDetails) {
-        final String username = extractUsername(token);
-        return (username.equals(userDetails.getUsername())) && !isTokenExpired(token);
+    /** Convenience method for UserDetails compatibility */
+    public String generateToken(UserDetails userDetails) {
+        return generateToken(userDetails.getUsername(), null);
     }
 
-    private boolean isTokenExpired(String token) {
-        return extractExpiration(token).before(new Date());
-    }
-
-    private Date extractExpiration(String token) {
-        return extractClaim(token, Claims::getExpiration);
-    }
-
-    private Claims extractAllClaims(String token) {
+    /** Return signed claims or throw a JwtException subclass on invalid token. */
+    public Jws<Claims> parseSignedClaims(String token) throws JwtException {
+        String tokenWithoutBearer = stripBearer(token);
         return Jwts.parser()
-                .verifyWith(getSecretKey())
+                .verifyWith(signingKey())
+                .requireIssuer(issuer)
+                .clockSkewSeconds(Math.max(0, clockSkewToleranceSeconds))
                 .build()
-                .parseSignedClaims(token)
-                .getPayload();
+                .parseSignedClaims(tokenWithoutBearer);
+    }
+
+    /** Simple validity check plus optional subject match. */
+    public boolean isValid(String token, String expectedSubject) {
+        try {
+            if (token == null || token.trim().isEmpty()) {
+                return false;
+            }
+            var signedClaims = parseSignedClaims(token);
+            return expectedSubject == null
+                    || expectedSubject.equals(signedClaims.getPayload().getSubject());
+        } catch (JwtException e) {
+            return false;
+        }
+    }
+
+    /** Legacy method for UserDetails compatibility */
+    public boolean isTokenValid(String token, UserDetails userDetails) {
+        return isValid(token, userDetails.getUsername());
+    }
+
+    public String extractSubject(String token) {
+        return parseSignedClaims(token).getPayload().getSubject();
+    }
+
+    /** Legacy method for username extraction */
+    public String extractUsername(String token) {
+        return extractSubject(token);
+    }
+
+    private static String stripBearer(String token) {
+        if (token == null) return "";
+        String trimmedToken = token.trim();
+        return (trimmedToken.regionMatches(true, 0, "Bearer ", 0, 7)) ? trimmedToken.substring(7).trim() : trimmedToken;
     }
 }
