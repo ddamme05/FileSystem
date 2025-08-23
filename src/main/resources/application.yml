@@ -63,3 +63,5 @@ security:
     # Keep quoted to avoid YAML parsing issues; default is a valid base64 key
     secret: "${SECURITY_JWT_SECRET:IkZTI0VwjSvZuMo99cXAx9xzeJhKHLyJODC5PoHsjO4=}"
     expiration-ms: ${SECURITY_JWT_EXPIRATION_MS:86400000}
+    issuer: ${JWT_ISSUER:file-system}
+    clock-skew-seconds: ${SECURITY_JWT_CLOCK_SKEW_SECONDS:30}
