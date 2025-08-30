@@ -24,22 +24,32 @@ public class TestStorageConfig {
 
         @Override
         public String upload(MultipartFile file) {
-            String key = UUID.randomUUID().toString() + "-" + (file.getOriginalFilename() == null ? "file" : file.getOriginalFilename());
-            keys.add(key);
+            String key = UUID.randomUUID() + "-" + (file.getOriginalFilename()==null?"file":file.getOriginalFilename());
+            keys.add(key); 
             return key;
         }
 
         @Override
+        public String upload(MultipartFile file, String storageKey) {
+            keys.add(storageKey); 
+            return storageKey;
+        }
+
+        @Override
         public String generatePresignedDownloadUrl(String storageKey) {
-            if (!keys.contains(storageKey)) {
-                throw new StorageOperationException("Unknown storage key: " + storageKey);
-            }
+            if (!keys.contains(storageKey)) throw new StorageOperationException("Unknown storage key: " + storageKey);
             return "http://localhost/fake/" + storageKey;
         }
 
         @Override
-        public void delete(String storageKey) {
-            keys.remove(storageKey);
+        public String generatePresignedDownloadUrl(String key, String originalName) {
+            if (!keys.contains(key)) throw new StorageOperationException("Unknown storage key: " + key);
+            return "http://localhost/fake/" + key;
+        }
+
+        @Override
+        public void delete(String storageKey) { 
+            keys.remove(storageKey); 
         }
     }
 }
