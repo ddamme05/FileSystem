@@ -1,92 +1,66 @@
 package org.ddamme.controller;
-import io.swagger.v3.oas.annotations.Operation;
-import lombok.extern.slf4j.Slf4j;
 
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.ddamme.database.model.FileMetadata;
 import org.ddamme.database.model.User;
-import org.ddamme.dto.FileListResponse;
-import org.ddamme.dto.FileUploadResponse;
-import org.ddamme.dto.PagedFileResponse;
 import org.ddamme.dto.DownloadUrlResponse;
-import org.ddamme.exception.AccessDeniedException;
+import org.ddamme.dto.FileDto;
+import org.ddamme.dto.FileListResponse;
+import org.ddamme.dto.PagedFileResponse;
+import org.ddamme.logging.AuditLogger;
+import org.ddamme.service.FileService;
 import org.ddamme.service.MetadataService;
-import org.ddamme.service.StorageService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.Map;
-import org.ddamme.logging.AuditLogger;
+import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/files")
+@RequestMapping({"/files", "/api/v1/files"})
 @RequiredArgsConstructor
 @Slf4j
 public class FileController {
 
+    private final FileService fileService;
     private final MetadataService metadataService;
-    private final StorageService storageService;
+    
+    private static final int MAX_PAGE_SIZE = 100;
 
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "Upload a file to storage and create metadata")
-    public ResponseEntity<FileUploadResponse> uploadFile(@RequestPart("file") MultipartFile file, @AuthenticationPrincipal User currentUser) {
-
-        log.info("Received file upload request - filename: {}, size: {}, contentType: {}", 
-                file.getOriginalFilename(), file.getSize(), file.getContentType());
-
-        String storageKey = storageService.upload(file);
-
-        FileMetadata metadata = FileMetadata.builder()
-                .originalFilename(file.getOriginalFilename())
-                .storageKey(storageKey)
-                .size(file.getSize())
-                .contentType(file.getContentType())
-                .user(currentUser)
-                .build();
-
-        FileMetadata savedMetadata = metadataService.save(metadata);
-
-        FileUploadResponse response = FileUploadResponse.builder()
-                .id(savedMetadata.getId())
-                .originalFilename(savedMetadata.getOriginalFilename())
-                .storageKey(savedMetadata.getStorageKey())
-                .size(savedMetadata.getSize())
-                .contentType(savedMetadata.getContentType())
-                .uploaderUsername(currentUser.getUsername())
-                .uploadTimestamp(savedMetadata.getUploadTimestamp())
-                .updateTimestamp(savedMetadata.getUpdateTimestamp())
-                .build();
+    public ResponseEntity<FileDto> uploadFile(
+            @RequestPart("file") MultipartFile file,
+            @AuthenticationPrincipal User currentUser) {
+        
+        FileMetadata savedMetadata = fileService.upload(currentUser, file);
 
         AuditLogger.log("file_upload", Map.of(
-                "user", currentUser.getUsername(),
-                "file", savedMetadata.getOriginalFilename(),
-                "id", savedMetadata.getId(),
-                "size", savedMetadata.getSize()
+            "user", currentUser.getUsername(),
+            "fileId", savedMetadata.getId(),
+            "filename", savedMetadata.getOriginalFilename(),
+            "size", savedMetadata.getSize()
         ));
-
-        return ResponseEntity.ok(response);
+        
+        return ResponseEntity.ok(FileDto.from(savedMetadata));
     }
 
     @GetMapping("/download/{id}")
     @Operation(summary = "Generate a presigned download URL for your file")
     public ResponseEntity<DownloadUrlResponse> downloadFile(@PathVariable Long id, @AuthenticationPrincipal User currentUser) {
-        FileMetadata metadata = metadataService.findOwnedById(currentUser, id);
-
-        String downloadUrl = storageService.generatePresignedDownloadUrl(metadata.getStorageKey());
+        String downloadUrl = fileService.presignDownloadUrl(currentUser, id);
 
         AuditLogger.log("file_download_url", Map.of(
                 "user", currentUser.getUsername(),
-                "id", metadata.getId(),
-                "storageKey", metadata.getStorageKey()
+                "fileId", id
         ));
 
         return ResponseEntity.ok(DownloadUrlResponse.builder().downloadUrl(downloadUrl).build());
@@ -95,16 +69,11 @@ public class FileController {
     @DeleteMapping("/{id}")
     @Operation(summary = "Delete your file")
     public ResponseEntity<?> deleteFile(@PathVariable Long id, @AuthenticationPrincipal User currentUser) {
-        FileMetadata metadata = metadataService.findOwnedById(currentUser, id);
-
-        storageService.delete(metadata.getStorageKey());
-
-        metadataService.deleteById(id);
+        fileService.delete(currentUser, id);
 
         AuditLogger.log("file_delete", Map.of(
                 "user", currentUser.getUsername(),
-                "id", id,
-                "storageKey", metadata.getStorageKey()
+                "fileId", id
         ));
 
         return ResponseEntity.noContent().build();
@@ -116,8 +85,9 @@ public class FileController {
             @AuthenticationPrincipal User currentUser,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-        
-        Pageable pageable = PageRequest.of(page, size);
+
+        int clampedSize = Math.max(1, Math.min(size, MAX_PAGE_SIZE));
+        PageRequest pageable = PageRequest.of(page, clampedSize);
         
         Page<FileMetadata> userFilesPage = metadataService.findByUser(currentUser, pageable);
         
