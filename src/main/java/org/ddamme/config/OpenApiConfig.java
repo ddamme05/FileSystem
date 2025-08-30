@@ -26,7 +26,9 @@ public class OpenApiConfig {
                     if (!path.startsWith("/api/v1/auth/")) {
                         operation.addSecurityItem(new SecurityRequirement().addList("bearerAuth"));
                     }
-                    if (path.startsWith("/files")) {
+                    if (path.startsWith("/api/v1/files")) {
+                        operation.setTags(List.of("Files"));
+                    } else if (path.startsWith("/files")) {
                         operation.setTags(List.of("Files"));
                     } else if (path.startsWith("/api/v1/auth")) {
                         operation.setTags(List.of("Auth"));
