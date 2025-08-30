@@ -40,15 +40,12 @@ public class MetadataServiceImpl implements MetadataService {
     @Transactional(readOnly = true)
     @Observed(name = "service.metadata.findOwnedById")
     public FileMetadata findOwnedById(User owner, Long id) {
-        FileMetadata metadata = metadataRepository.findById(id)
+        FileMetadata fileMetadata = metadataRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("FileMetadata", "id", id));
-        if (metadata.getUser() == null) {
-            throw new AccessDeniedException("File has no owner - access denied");
-        }
-        if (!metadata.getUser().getId().equals(owner.getId())) {
+        if (!fileMetadata.getUser().getId().equals(owner.getId())) {
             throw new AccessDeniedException("You can only access your own files");
         }
-        return metadata;
+        return fileMetadata;
     }
 
     @Override

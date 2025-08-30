@@ -9,10 +9,12 @@ import org.springframework.stereotype.Repository;
 import io.micrometer.observation.annotation.Observed;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 @Observed(name = "repository.metadata")
 public interface MetadataRepository extends JpaRepository<FileMetadata, Long> {
     List<FileMetadata> findByUserOrderByUploadTimestampDesc(User user);
     Page<FileMetadata> findByUserOrderByUploadTimestampDesc(User user, Pageable pageable);
+    Optional<FileMetadata> findByIdAndUserId(Long id, Long userId);
 } 
