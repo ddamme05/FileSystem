@@ -8,8 +8,10 @@ import io.swagger.v3.oas.models.security.SecurityRequirement;
 import java.util.List;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Profile;
 import org.springdoc.core.customizers.OpenApiCustomizer;
 
+@Profile("!prod")   // Only load Swagger config outside prod
 @Configuration
 @OpenAPIDefinition(info = @Info(title = "File System API", version = "v1"))
 @SecurityScheme(name = "bearerAuth", type = SecuritySchemeType.HTTP, scheme = "bearer", bearerFormat = "JWT")

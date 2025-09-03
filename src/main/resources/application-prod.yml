@@ -7,22 +7,51 @@ spring:
     hibernate:
       ddl-auto: validate
     show-sql: false
+
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
+
+server:
+  forward-headers-strategy: framework
+
+security:
+  ratelimit:
+    per-minute:
+      upload: 5
+      download: 60
+  cors:
+    allowed-origins:
+      - https://app.example.com    # put your real frontend(s) here
+      # - https://admin.example.com
+    allowed-headers:
+      - Authorization
+      - Content-Type
+      - X-Request-ID
+      - Accept
+    exposed-headers:
+      - X-Request-ID
+      - Content-Disposition
+      - Location
+
 management:
   endpoints:
     web:
       exposure:
-        include: health,info,prometheus
+        include: health,info
   endpoint:
     health:
       probes:
         enabled: true
-  datadog:
-    metrics:
-      export:
-        enabled: true
-        api-key: ${DD_API_KEY}
-        uri: ${DD_URI:https://api.datadoghq.com} 
   metrics:
+    export:
+      statsd:
+        enabled: true
+        flavor: datadog
+        host: ${DD_AGENT_HOST:127.0.0.1}
+        port: ${DD_DOGSTATSD_PORT:8125}
     tags:
       application: ${spring.application.name}
       service: ${DD_SERVICE:file-system}
