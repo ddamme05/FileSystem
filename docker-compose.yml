@@ -74,7 +74,7 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/file_system_db
       SPRING_DATASOURCE_USERNAME: user
       SPRING_PROFILES_ACTIVE: dev
-      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: "health,info,metrics,prometheus"
+      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: "health,info"
     secrets:
       - db_password
       - jwt_secret
