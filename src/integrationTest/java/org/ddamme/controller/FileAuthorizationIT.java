@@ -41,8 +41,8 @@ class FileAuthorizationIT extends BaseIntegrationTest {
     private MetadataRepository metadataRepository;
 
     @Test
-    @DisplayName("Accessing another user's file returns 403")
-    void crossUser_access_forbidden() throws Exception {
+    @DisplayName("Accessing another user's file returns 404")
+    void crossUser_access_returns_not_found() throws Exception {
         // Register owner (A)
         String userA = "owner" + System.currentTimeMillis();
         RegisterRequest regA = RegisterRequest.builder()
@@ -93,15 +93,15 @@ class FileAuthorizationIT extends BaseIntegrationTest {
                 .andReturn();
         String tokenB = JsonPath.read(loginRes.getResponse().getContentAsString(), "$.token");
 
-        // B attempts to download A's file -> 403
+        // B attempts to download A's file -> 404 (prevents existence probing)
         mockMvc.perform(get("/files/download/" + fm.getId())
                         .header("Authorization", "Bearer " + tokenB))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isNotFound());
 
-        // B attempts to delete A's file -> 403
+        // B attempts to delete A's file -> 404 (prevents existence probing)
         mockMvc.perform(delete("/files/" + fm.getId())
                         .header("Authorization", "Bearer " + tokenB))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isNotFound());
     }
 }
 
