@@ -1,0 +1,14 @@
+# Production override for docker-compose.yml
+# Usage: docker-compose -f docker-compose.yml -f docker-compose.prod.yml up
+
+services:
+  app:
+    environment:
+      SPRING_PROFILES_ACTIVE: prod  # ← Override to prod profile
+      DD_ENV: prod                  # ← Production Datadog environment
+      # Add any other prod-specific env vars here
+      
+  datadog:
+    environment:
+      DD_ENV: prod
+
