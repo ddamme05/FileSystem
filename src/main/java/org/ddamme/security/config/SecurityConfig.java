@@ -4,6 +4,7 @@ import org.ddamme.dto.ErrorResponse;
 import org.ddamme.security.filter.JwtAuthenticationFilter;
 import org.ddamme.security.filter.RequestCorrelationFilter;
 import org.ddamme.security.filter.CacheControlFilter;
+import org.ddamme.security.filter.RateLimitFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
@@ -38,6 +39,7 @@ public class SecurityConfig {
     private final AuthenticationProvider authenticationProvider;
     private final RequestCorrelationFilter requestCorrelationFilter;
     private final CacheControlFilter cacheControlFilter;
+    private final RateLimitFilter rateLimitFilter;
     private final Environment environment;
 
     @Bean
@@ -58,6 +60,8 @@ public class SecurityConfig {
         };
     }
 
+
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, AuthenticationEntryPoint authenticationEntryPoint, ObjectMapper objectMapper) throws Exception {
         http
@@ -67,16 +71,15 @@ public class SecurityConfig {
                         .frameOptions(HeadersConfigurer.FrameOptionsConfig::deny)
                         .contentTypeOptions(withDefaults())
                         .referrerPolicy(r -> r.policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.NO_REFERRER))
+                        .httpStrictTransportSecurity(hsts -> hsts
+                                .includeSubDomains(true)
+                                .preload(true)
+                                .maxAgeInSeconds(63072000)) // 2 years
+                        .contentSecurityPolicy(csp -> csp
+                                .policyDirectives("default-src 'none'")) // API-safe CSP
                 )
                 .authorizeHttpRequests(authorize -> {
-                    authorize.requestMatchers("/api/v1/auth/**", "/actuator/health").permitAll();
-                    
-                    // Restrict prometheus in production
-                    if (isProductionProfile()) {
-                        authorize.requestMatchers("/actuator/prometheus").hasAuthority("ADMIN");
-                    } else {
-                        authorize.requestMatchers("/actuator/prometheus").permitAll();
-                    }
+                    authorize.requestMatchers("/api/v1/auth/**", "/actuator/health", "/actuator/health/**", "/actuator/info").permitAll();
                     
                     // Disable Swagger in production  
                     if (!isProductionProfile()) {
@@ -105,21 +108,22 @@ public class SecurityConfig {
                 .authenticationProvider(authenticationProvider)
                 .addFilterBefore(cacheControlFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(requestCorrelationFilter, UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(rateLimitFilter, JwtAuthenticationFilter.class);
 
         return http.build();
     }
 
     @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration cfg = new CorsConfiguration();
-        cfg.setAllowedOriginPatterns(List.of("http://localhost:*", "http://127.0.0.1:*"));
-        cfg.setAllowedMethods(List.of("GET","POST","PUT","PATCH","DELETE","OPTIONS"));
-        cfg.setAllowedHeaders(List.of("Authorization","Content-Type","X-Request-ID"));
-        cfg.setExposedHeaders(List.of("X-Request-ID"));
-        cfg.setAllowCredentials(true);
-        cfg.setMaxAge(Duration.ofMinutes(30));
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+    public CorsConfigurationSource corsConfigurationSource(CorsProperties cp) {
+        var cfg = new CorsConfiguration();
+        cfg.setAllowedOrigins(cp.getAllowedOrigins());   // exact origins
+        cfg.setAllowedMethods(cp.getAllowedMethods());
+        cfg.setAllowedHeaders(cp.getAllowedHeaders());
+        cfg.setExposedHeaders(cp.getExposedHeaders());
+        cfg.setAllowCredentials(cp.isAllowCredentials());
+        cfg.setMaxAge(cp.getMaxAge());
+        var source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", cfg);
         return source;
     }

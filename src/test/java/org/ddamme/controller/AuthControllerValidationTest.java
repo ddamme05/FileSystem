@@ -7,6 +7,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.ddamme.testsupport.TestMocksConfig;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.FilterType;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
@@ -17,7 +19,13 @@ import org.ddamme.dto.RegisterRequest;
 
 @WebMvcTest(controllers = AuthController.class, properties = {
         "springdoc.api-docs.enabled=false",
-        "springdoc.swagger-ui.enabled=false"
+        "springdoc.swagger-ui.enabled=false",
+        "security.ratelimit.per-minute.upload=10",
+        "security.ratelimit.per-minute.download=120"
+}, excludeFilters = {
+        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = {
+                org.ddamme.security.filter.RateLimitFilter.class
+        })
 })
 @AutoConfigureMockMvc(addFilters = false)
 @Import(TestMocksConfig.class)
