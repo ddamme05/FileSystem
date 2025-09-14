@@ -23,18 +23,13 @@ read_secret() {
 # Read secrets with validation (as root)
 SPRING_DATASOURCE_PASSWORD="$(read_secret /run/secrets/db_password)"
 SECURITY_JWT_SECRET="$(read_secret /run/secrets/jwt_secret)"
-AWS_S3_BUCKET="$(read_secret /run/secrets/aws_s3_bucket)"
-AWS_REGION="$(read_secret /run/secrets/aws_region)"
-AWS_ACCESS_KEY_ID="$(read_secret /run/secrets/aws_access_key_id)"
-AWS_SECRET_ACCESS_KEY="$(read_secret /run/secrets/aws_secret_access_key)"
 
 # Export all variables
 export SPRING_DATASOURCE_PASSWORD
 export SECURITY_JWT_SECRET
-export AWS_S3_BUCKET
-export AWS_REGION
-export AWS_ACCESS_KEY_ID
-export AWS_SECRET_ACCESS_KEY
+
+# Note: AWS credentials now come from EC2 instance role via IMDSv2
+# AWS_REGION and AWS_S3_BUCKET are set as environment variables in docker-compose.yml
 
 # Drop privileges and start Java app with safer fallbacks
 if command -v setpriv >/dev/null 2>&1; then

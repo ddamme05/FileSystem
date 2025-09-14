@@ -1,0 +1,4 @@
+# LocalStack profile for S3 integration tests
+# AWS region required for AwsProperties validation (actual S3 config comes from LocalStackS3TestConfig)
+aws:
+  region: us-east-1

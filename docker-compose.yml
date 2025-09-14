@@ -7,14 +7,6 @@ secrets:
     file: ./.secrets/db_password
   jwt_secret:
     file: ./.secrets/jwt_secret
-  aws_s3_bucket:
-    file: ./.secrets/aws_s3_bucket
-  aws_region:
-    file: ./.secrets/aws_region
-  aws_access_key_id:
-    file: ./.secrets/aws_access_key_id
-  aws_secret_access_key:
-    file: ./.secrets/aws_secret_access_key
 
 services:
   postgres-db:
@@ -74,14 +66,13 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/file_system_db
       SPRING_DATASOURCE_USERNAME: user
       SPRING_PROFILES_ACTIVE: dev
-      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: "health,info,metrics,prometheus"
+      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: "health,info"
+      # AWS configuration (credentials via EC2 instance role)
+      AWS_REGION: us-east-1
+      AWS_S3_BUCKET: filesystem-s3
     secrets:
       - db_password
       - jwt_secret
-      - aws_s3_bucket
-      - aws_region
-      - aws_access_key_id
-      - aws_secret_access_key
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:8080/actuator/health"]
       interval: 30s

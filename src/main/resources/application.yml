@@ -4,8 +4,8 @@ spring:
   servlet:
     multipart:
       enabled: true
-      max-file-size: 100MB
-      max-request-size: 100MB
+      max-file-size: 10MB
+      max-request-size: 10MB
       file-size-threshold: 1KB
 
   datasource:
@@ -36,7 +36,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics,prometheus
+        include: health,info
   endpoint:
     health:
       probes:
@@ -44,6 +44,12 @@ management:
 
 
   metrics:
+    export:
+      statsd:
+        enabled: ${DD_ENABLE_METRICS:false}
+        flavor: datadog
+        host: ${DD_AGENT_HOST:127.0.0.1}
+        port: ${DD_DOGSTATSD_PORT:8125}
     tags:
       application: ${spring.application.name}
       service: ${DD_SERVICE:file-system-app}
@@ -57,6 +63,7 @@ aws:
   region: ${AWS_REGION:us-east-1}
   s3:
     bucket-name: ${AWS_S3_BUCKET:filesystem-s3}
+    presign-ttl-minutes: ${AWS_S3_PRESIGN_TTL_MINUTES:5}
 
 security:
   jwt:
@@ -65,3 +72,24 @@ security:
     expiration-ms: ${SECURITY_JWT_EXPIRATION_MS:86400000}
     issuer: ${JWT_ISSUER:file-system}
     clock-skew-seconds: ${SECURITY_JWT_CLOCK_SKEW_SECONDS:30}
+  ratelimit:
+    per-minute:
+      upload: 10
+      download: 120
+      login: 10
+    message: "Please slow down"
+    send-retry-after: true
+    retry-after: 30s
+  cors:
+    allowed-origins:
+      - http://localhost:3000
+      - http://127.0.0.1:3000
+    allowed-headers:
+      - Authorization
+      - Content-Type
+      - X-Request-ID
+      - Accept
+    exposed-headers:
+      - X-Request-ID
+      - Content-Disposition
+      - Location

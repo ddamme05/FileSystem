@@ -1,8 +1,10 @@
 package org.ddamme.service;
 
+import io.micrometer.observation.annotation.Observed;
 import lombok.RequiredArgsConstructor;
 import org.ddamme.config.AwsProperties;
 import org.ddamme.exception.StorageOperationException;
+import org.ddamme.util.FileUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.core.sync.RequestBody;
@@ -18,85 +20,95 @@ import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequ
 import java.io.IOException;
 import java.time.Duration;
 import java.util.UUID;
-import io.micrometer.observation.annotation.Observed;
 
 @Service
 @RequiredArgsConstructor
 public class S3StorageService implements StorageService {
 
-    private final S3Client s3Client;
-    private final S3Presigner s3Presigner;
-    private final AwsProperties awsProperties;
-    
+  private final S3Client s3Client;
+  private final S3Presigner s3Presigner;
+  private final AwsProperties awsProperties;
 
-    @Override
-    @Observed(name = "s3.upload")
-    public String upload(MultipartFile file) {
-        String storageKey = generateStorageKey(file.getOriginalFilename());
-        return upload(file, storageKey);
+  @Override
+  @Observed(name = "s3.upload")
+  public String upload(MultipartFile file) {
+    String storageKey = generateStorageKey(file.getOriginalFilename());
+    return upload(file, storageKey);
+  }
+
+  @Override
+  @Observed(name = "s3.upload.with.key")
+  public String upload(MultipartFile file, String storageKey) {
+    String bucketName = awsProperties.getS3().getBucketName();
+    String contentType = FileUtils.getContentTypeOrDefault(file.getContentType());
+
+    PutObjectRequest putObjectRequest =
+        PutObjectRequest.builder()
+            .bucket(bucketName)
+            .key(storageKey)
+            .contentType(contentType)
+            .contentLength(file.getSize())
+            .serverSideEncryption(ServerSideEncryption.AES256)
+            .build();
+    try {
+      s3Client.putObject(
+          putObjectRequest, RequestBody.fromInputStream(file.getInputStream(), file.getSize()));
+      return storageKey;
+    } catch (IOException e) {
+      throw new StorageOperationException(
+          "Failed to upload file: " + file.getOriginalFilename(), e);
+    }
+  }
+
+  private String generateStorageKey(String originalFilename) {
+    String name = FileUtils.sanitizeFilename(originalFilename == null ? "file" : originalFilename);
+    return UUID.randomUUID().toString() + "-" + name;
+  }
+
+  @Override
+  @Observed(name = "s3.presign")
+  public String generatePresignedDownloadUrl(String storageKey) {
+    return generatePresignedDownloadUrl(storageKey, null);
+  }
+
+  @Override
+  @Observed(name = "s3.presign.with.filename")
+  public String generatePresignedDownloadUrl(String key, String originalName) {
+    String bucketName = awsProperties.getS3().getBucketName();
+    GetObjectRequest.Builder requestBuilder =
+        GetObjectRequest.builder()
+            .bucket(bucketName)
+            .key(key)
+            .responseContentType("application/octet-stream"); // Force binary download
+
+    if (originalName != null && !originalName.isBlank()) {
+      // RFC 5987 compliance: ASCII fallback + UTF-8 encoded filename
+      String ascii =
+          originalName.replaceAll("[^\\x20-\\x7E]", "_").replace("\"", "'").replace("\\", "_");
+      String rfc5987 = FileUtils.rfc5987Encode(originalName);
+      String disposition = "attachment; filename=\"" + ascii + "\"; filename*=UTF-8''" + rfc5987;
+      requestBuilder.responseContentDisposition(disposition);
     }
 
-    @Override
-    @Observed(name = "s3.upload.with.key")
-    public String upload(MultipartFile file, String storageKey) {
-        String bucketName = awsProperties.getS3().getBucketName();
-        PutObjectRequest putObjectRequest = PutObjectRequest.builder()
-                .bucket(bucketName)
-                .key(storageKey)
-                .contentType(file.getContentType())
-                .contentLength(file.getSize())
-                .serverSideEncryption(ServerSideEncryption.AES256) // ADD THIS
-                .build();
-        try {
-            s3Client.putObject(putObjectRequest,
-                    RequestBody.fromInputStream(file.getInputStream(), file.getSize()));
-            return storageKey;
-        } catch (IOException e) {
-            throw new StorageOperationException("Failed to upload file: " + file.getOriginalFilename(), e);
-        }
-    }
+    GetObjectRequest getObjectRequest = requestBuilder.build();
 
-    private String generateStorageKey(String originalFilename) {
-        return UUID.randomUUID().toString() + "-" + originalFilename;
-    }
+    GetObjectPresignRequest getObjectPresignRequest =
+        GetObjectPresignRequest.builder()
+            .signatureDuration(Duration.ofMinutes(awsProperties.getS3().getPresignTtlMinutes()))
+            .getObjectRequest(getObjectRequest)
+            .build();
+    PresignedGetObjectRequest presignedRequest =
+        s3Presigner.presignGetObject(getObjectPresignRequest);
+    return presignedRequest.url().toString();
+  }
 
-    @Override
-    @Observed(name = "s3.presign")
-    public String generatePresignedDownloadUrl(String storageKey) {
-        return generatePresignedDownloadUrl(storageKey, null);
-    }
+  @Override
+  @Observed(name = "s3.delete")
+  public void delete(String storageKey) {
+    String bucketName = awsProperties.getS3().getBucketName();
 
-    @Override
-    @Observed(name = "s3.presign.with.filename")
-    public String generatePresignedDownloadUrl(String key, String originalName) {
-        String bucketName = awsProperties.getS3().getBucketName();
-        GetObjectRequest.Builder requestBuilder = GetObjectRequest.builder()
-                .bucket(bucketName)
-                .key(key);
-        
-        if (originalName != null) {
-            requestBuilder.responseContentDisposition("attachment; filename=\"" + originalName + "\"");
-        }
-        
-        GetObjectRequest getObjectRequest = requestBuilder.build();
-
-        GetObjectPresignRequest getObjectPresignRequest = GetObjectPresignRequest.builder()
-                .signatureDuration(Duration.ofMinutes(5))
-                .getObjectRequest(getObjectRequest)
-                .build();
-        PresignedGetObjectRequest presignedRequest = s3Presigner.presignGetObject(getObjectPresignRequest);
-        return presignedRequest.url().toString();
-    }
-
-    @Override
-    @Observed(name = "s3.delete")
-    public void delete(String storageKey) {
-        String bucketName = awsProperties.getS3().getBucketName();
-
-        DeleteObjectRequest deleteObjectRequest = DeleteObjectRequest.builder()
-                .bucket(bucketName)
-                .key(storageKey)
-                .build();
-        s3Client.deleteObject(deleteObjectRequest);
-    }
-} 
+    DeleteObjectRequest deleteObjectRequest =
+        DeleteObjectRequest.builder().bucket(bucketName).key(storageKey).build();
+    s3Client.deleteObject(deleteObjectRequest);
+  }
+}

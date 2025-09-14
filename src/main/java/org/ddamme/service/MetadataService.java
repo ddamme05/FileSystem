@@ -8,10 +8,15 @@ import org.springframework.data.domain.Pageable;
 import java.util.List;
 
 public interface MetadataService {
-    FileMetadata save(FileMetadata metadata);
-    FileMetadata findById(Long id);
-    FileMetadata findOwnedById(User owner, Long id);
-    void deleteById(Long id);
-    List<FileMetadata> findByUser(User user);
-    Page<FileMetadata> findByUser(User user, Pageable pageable);
-} 
+  FileMetadata save(FileMetadata metadata);
+
+  FileMetadata findById(Long id);
+
+  FileMetadata findOwnedById(User owner, Long id);
+
+  void deleteById(Long id);
+
+  List<FileMetadata> findByUser(User user);
+
+  Page<FileMetadata> findByUser(User user, Pageable pageable);
+}

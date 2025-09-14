@@ -21,88 +21,91 @@ import static org.mockito.Mockito.*;
 
 class UserServiceImplTest {
 
-    private UserRepository userRepository;
-    private PasswordEncoder passwordEncoder;
-    private UserServiceImpl userService;
+  private UserRepository userRepository;
+  private PasswordEncoder passwordEncoder;
+  private UserServiceImpl userService;
 
-    @BeforeEach
-    void setUp() {
-        userRepository = Mockito.mock(UserRepository.class);
-        passwordEncoder = Mockito.mock(PasswordEncoder.class);
-        userService = new UserServiceImpl(userRepository, passwordEncoder);
-    }
+  @BeforeEach
+  void setUp() {
+    userRepository = Mockito.mock(UserRepository.class);
+    passwordEncoder = Mockito.mock(PasswordEncoder.class);
+    userService = new UserServiceImpl(userRepository, passwordEncoder);
+  }
 
-    @Test
-    @DisplayName("registerUser encodes password, sets USER role, and saves when unique")
-    void registerUser_happyPath() {
-        // Given
-        RegisterRequest request = RegisterRequest.builder()
-                .username("alice")
-                .email("alice@example.com")
-                .password("secret123")
-                .build();
+  @Test
+  @DisplayName("registerUser encodes password, sets USER role, and saves when unique")
+  void registerUser_happyPath() {
+    // Given
+    RegisterRequest request =
+        RegisterRequest.builder()
+            .username("alice")
+            .email("alice@example.com")
+            .password("secret123")
+            .build();
 
-        when(userRepository.findByUsername("alice")).thenReturn(Optional.empty());
-        when(userRepository.findByEmail("alice@example.com")).thenReturn(Optional.empty());
-        when(passwordEncoder.encode("secret123")).thenReturn("encoded-secret");
-        when(userRepository.save(any(User.class))).thenAnswer(invocation -> {
-            User u = invocation.getArgument(0);
-            u.setId(1L);
-            return u;
-        });
+    when(userRepository.findByUsername("alice")).thenReturn(Optional.empty());
+    when(userRepository.findByEmail("alice@example.com")).thenReturn(Optional.empty());
+    when(passwordEncoder.encode("secret123")).thenReturn("encoded-secret");
+    when(userRepository.save(any(User.class)))
+        .thenAnswer(
+            invocation -> {
+              User u = invocation.getArgument(0);
+              u.setId(1L);
+              return u;
+            });
 
-        // When
-        User saved = userService.registerUser(request);
+    // When
+    User saved = userService.registerUser(request);
 
-        // Then
-        ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
-        verify(userRepository).save(userCaptor.capture());
-        User toSave = userCaptor.getValue();
+    // Then
+    ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
+    verify(userRepository).save(userCaptor.capture());
+    User toSave = userCaptor.getValue();
 
-        assertThat(toSave.getUsername()).isEqualTo("alice");
-        assertThat(toSave.getEmail()).isEqualTo("alice@example.com");
-        assertThat(toSave.getPassword()).isEqualTo("encoded-secret");
-        assertThat(toSave.getRole()).isEqualTo(Role.USER);
+    assertThat(toSave.getUsername()).isEqualTo("alice");
+    assertThat(toSave.getEmail()).isEqualTo("alice@example.com");
+    assertThat(toSave.getPassword()).isEqualTo("encoded-secret");
+    assertThat(toSave.getRole()).isEqualTo(Role.USER);
 
-        assertThat(saved.getId()).isEqualTo(1L);
-    }
+    assertThat(saved.getId()).isEqualTo(1L);
+  }
 
-    @Test
-    @DisplayName("registerUser throws when username exists")
-    void registerUser_usernameExists() {
-        RegisterRequest request = RegisterRequest.builder()
-                .username("alice")
-                .email("alice@example.com")
-                .password("secret123")
-                .build();
+  @Test
+  @DisplayName("registerUser throws when username exists")
+  void registerUser_usernameExists() {
+    RegisterRequest request =
+        RegisterRequest.builder()
+            .username("alice")
+            .email("alice@example.com")
+            .password("secret123")
+            .build();
 
-        when(userRepository.findByUsername("alice")).thenReturn(Optional.of(new User()));
+    when(userRepository.findByUsername("alice")).thenReturn(Optional.of(new User()));
 
-        assertThatThrownBy(() -> userService.registerUser(request))
-                .isInstanceOf(DuplicateResourceException.class)
-                .hasMessageContaining("username");
+    assertThatThrownBy(() -> userService.registerUser(request))
+        .isInstanceOf(DuplicateResourceException.class)
+        .hasMessageContaining("username");
 
-        verify(userRepository, never()).save(any());
-    }
+    verify(userRepository, never()).save(any());
+  }
 
-    @Test
-    @DisplayName("registerUser throws when email exists")
-    void registerUser_emailExists() {
-        RegisterRequest request = RegisterRequest.builder()
-                .username("alice")
-                .email("alice@example.com")
-                .password("secret123")
-                .build();
+  @Test
+  @DisplayName("registerUser throws when email exists")
+  void registerUser_emailExists() {
+    RegisterRequest request =
+        RegisterRequest.builder()
+            .username("alice")
+            .email("alice@example.com")
+            .password("secret123")
+            .build();
 
-        when(userRepository.findByUsername("alice")).thenReturn(Optional.empty());
-        when(userRepository.findByEmail("alice@example.com")).thenReturn(Optional.of(new User()));
+    when(userRepository.findByUsername("alice")).thenReturn(Optional.empty());
+    when(userRepository.findByEmail("alice@example.com")).thenReturn(Optional.of(new User()));
 
-        assertThatThrownBy(() -> userService.registerUser(request))
-                .isInstanceOf(DuplicateResourceException.class)
-                .hasMessageContaining("email");
+    assertThatThrownBy(() -> userService.registerUser(request))
+        .isInstanceOf(DuplicateResourceException.class)
+        .hasMessageContaining("email");
 
-        verify(userRepository, never()).save(any());
-    }
+    verify(userRepository, never()).save(any());
+  }
 }
-
-
