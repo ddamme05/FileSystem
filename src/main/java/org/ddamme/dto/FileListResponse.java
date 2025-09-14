@@ -1,10 +1,6 @@
 package org.ddamme.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.time.Instant;
 
@@ -14,9 +10,9 @@ import java.time.Instant;
 @AllArgsConstructor
 @NoArgsConstructor
 public class FileListResponse {
-    private Long id;
-    private String originalFilename;
-    private long size;
-    private String contentType;
-    private Instant uploadTimestamp;
+  private Long id;
+  private String originalFilename;
+  private long size;
+  private String contentType;
+  private Instant uploadTimestamp;
 }
