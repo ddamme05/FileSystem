@@ -22,7 +22,11 @@ bin/
 
 # Development scripts (not for commit)
 find_deprecations.sh
+find_deprecations.py
 organize_commits.sh
+organize_commits.py
+generate_*.py
+nul
 
 # IDE files
 .idea/
