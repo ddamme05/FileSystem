@@ -1,7 +1,12 @@
+import org.gradle.testing.jacoco.plugins.JacocoTaskExtension
+import org.gradle.testing.jacoco.tasks.JacocoReport
+
 plugins {
     id("org.springframework.boot") version "3.5.3"
     id("io.spring.dependency-management") version "1.1.7"
     id("java")
+    id("com.diffplug.spotless") version "7.2.1"
+    id("jacoco")
 }
 
 group = "org.ddamme"
@@ -23,9 +28,10 @@ dependencies {
     runtimeOnly("io.jsonwebtoken:jjwt-impl:0.12.6")
     runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.12.6")
     runtimeOnly("org.postgresql:postgresql")
+    runtimeOnly("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.9")
 
-    compileOnly("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.9")
     compileOnly("org.projectlombok:lombok")
+    compileOnly("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.9")
 
     testRuntimeOnly("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.9")
 
@@ -51,6 +57,10 @@ dependencies {
     testImplementation("org.testcontainers:junit-jupiter")
     testImplementation("org.testcontainers:postgresql")
     testImplementation("org.testcontainers:localstack")
+}
+
+jacoco {
+    toolVersion = "0.8.12"
 }
 
 dependencyManagement {
@@ -89,6 +99,10 @@ tasks.withType<Test> {
     })
 }
 
+tasks.test {
+    finalizedBy(tasks.jacocoTestReport)
+}
+
 // Disable plain JAR generation to simplify Docker build
 tasks.named<Jar>("jar") {
     enabled = false
@@ -121,6 +135,49 @@ tasks.register<Test>("integrationTest") {
     shouldRunAfter("test")
     // Always run integration tests, regardless of up-to-date checks
     outputs.upToDateWhen { false }
+
+    // Enable JaCoCo for integration tests
+    extensions.configure(JacocoTaskExtension::class) {
+        isEnabled = true
+        destinationFile = layout.buildDirectory.file("jacoco/integrationTest.exec").get().asFile
+    }
 }
 
 tasks.check { dependsOn("integrationTest") }
+
+// Standard unit-test report
+tasks.jacocoTestReport {
+    dependsOn(tasks.test)
+    reports {
+        xml.required.set(true)
+        html.required.set(true)
+    }
+}
+
+// Merged report for unit + IT (run on demand)
+tasks.register<JacocoReport>("jacocoMergedReport") {
+    dependsOn(tasks.test, tasks.named("integrationTest"), tasks.jacocoTestReport)
+    executionData(fileTree(layout.buildDirectory) {
+        include("**/jacoco/*.exec", "**/jacoco/*.ec")
+    })
+    sourceSets(sourceSets["main"])
+    reports {
+        xml.required.set(true)
+        html.required.set(true)
+    }
+}
+
+spotless {
+    java {
+        target("src/**/*.java")
+        importOrder()
+        removeUnusedImports()
+        googleJavaFormat("1.22.0")
+    }
+    // Keep gradle scripts neat
+    format("gradle") {
+        target("**/*.gradle.kts")
+        trimTrailingWhitespace()
+        endWithNewline()
+    }
+}

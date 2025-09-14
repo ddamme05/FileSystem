@@ -1,30 +1,39 @@
+# Build outputs
 .gradle
 build/
+out/
+bin/
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
 !**/src/test/**/build/
-PROJECT_PLAN.md
-.env
+!**/src/main/**/out/
+!**/src/test/**/out/
+!**/src/main/**/bin/
+!**/src/test/**/bin/
 
-# Secrets directory - NEVER commit secrets!
+# Environment & secrets
+.env
 .secrets/
 *.key
 *.pem
 
-### IntelliJ IDEA ###
-.idea/modules.xml
-.idea/jarRepositories.xml
-.idea/compiler.xml
-.idea/libraries/
-.idea
+# Git internals
+.git-rewrite/
+
+# Development scripts (not for commit)
+find_deprecations.sh
+organize_commits.sh
+
+# IDE files
+.idea/
+.vscode/
 *.iws
 *.iml
 *.ipr
-out/
-!**/src/main/**/out/
-!**/src/test/**/out/
+*.swp
+*.swo
 
-### Eclipse ###
+# Eclipse
 .apt_generated
 .classpath
 .factorypath
@@ -32,52 +41,13 @@ out/
 .settings
 .springBeans
 .sts4-cache
-bin/
-!**/src/main/**/bin/
-!**/src/test/**/bin/
 
-### NetBeans ###
+# NetBeans
 /nbproject/private/
 /nbbuild/
 /dist/
 /nbdist/
 /.nb-gradle/
-
-### VS Code ###
-.vscode/
-
-### Mac OS ###
-.DS_Store
-
-# Python files
-*.py
-*.pyc
-*.pyo
-*.pyd
-__pycache__/
-*.so
-.Python
-*.egg-info/
-dist/
-build/
-*.egg
-
-# Python virtual environments
-venv/
-env/
-.venv/
-.env/
-
-# Generated documentation/snapshot files
-codebase.md
-config_snapshot.md
-jwt_snapshot.md
-
-# Python IDE files
-.idea/
-.vscode/
-*.swp
-*.swo
 
 # OS generated files
 .DS_Store
@@ -87,3 +57,29 @@ jwt_snapshot.md
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# Python (for helper scripts)
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+*.so
+.Python
+*.egg-info/
+*.egg
+venv/
+env/
+.venv/
+.env/
+
+# Documentation & snapshots
+codebase.md
+config_snapshot.md
+jwt_snapshot.md
+*_snapshot.md
+*_snapshot_*.md  
+*.snapshot
+feature_improvements_snapshot_current.md
+
+# Project planning
+PROJECT_PLAN.md
