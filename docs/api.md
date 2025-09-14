@@ -40,16 +40,16 @@ All non-auth endpoints require a JWT via the `Authorization: Bearer <token>` hea
 
 ## Files
 
-Base path: `/files` (requires JWT)
+Base path: `/api/v1/files` (requires JWT)
 
-### POST /files/upload
+### POST /api/v1/files/upload
 - Description: Upload a file to S3; create metadata.
 - Consumes: multipart/form-data
 - Form fields:
   - `file`: the file to upload
 - Curl:
 ```bash
-curl -X POST "http://localhost:8080/files/upload" \
+curl -X POST "http://localhost:8080/api/v1/files/upload" \
   -H "Authorization: Bearer <JWT>" \
   -H "Accept: application/json" \
   -F "file=@/path/to/local-file.bin"
@@ -68,11 +68,11 @@ curl -X POST "http://localhost:8080/files/upload" \
 }
 ```
 
-### GET /files/download/{id}
+### GET /api/v1/files/download/{id}
 - Description: Get a short-lived presigned URL for your file.
 - Curl:
 ```bash
-curl -X GET "http://localhost:8080/files/download/1" \
+curl -X GET "http://localhost:8080/api/v1/files/download/1" \
   -H "Authorization: Bearer <JWT>" \
   -H "Accept: application/json"
 ```
@@ -84,22 +84,22 @@ curl -X GET "http://localhost:8080/files/download/1" \
 ```
 - Errors: 404 (not found or not your file)
 
-### DELETE /files/{id}
+### DELETE /api/v1/files/{id}
 - Description: Delete your file and metadata.
 - Curl:
 ```bash
-curl -X DELETE "http://localhost:8080/files/1" \
+curl -X DELETE "http://localhost:8080/api/v1/files/1" \
   -H "Authorization: Bearer <JWT>"
 ```
 - Response 204 (no content)
 - Errors: 404 (not found or not your file)
 
-### GET /files
+### GET /api/v1/files
 - Description: List your files with pagination (0-based page).
 - Query params: `page` (default 0), `size` (default 20)
 - Curl:
 ```bash
-curl -X GET "http://localhost:8080/files?page=0&size=10" \
+curl -X GET "http://localhost:8080/api/v1/files?page=0&size=10" \
   -H "Authorization: Bearer <JWT>" \
   -H "Accept: application/json"
 ```
@@ -128,9 +128,9 @@ curl -X GET "http://localhost:8080/files?page=0&size=10" \
 All errors use the same schema:
 ```json
 {
-  "timestamp": "01-01-2025 12:00:00 PM",
+  "timestamp": "2025-01-01T12:00:00",
   "status": 404,
-  "error": "Not Found",
+  "error": "Not Found", 
   "message": "FileMetadata not found with id : '1'",
   "path": "uri=/files/download/1"
 }

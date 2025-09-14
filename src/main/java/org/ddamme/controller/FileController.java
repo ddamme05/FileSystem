@@ -25,91 +25,91 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping({"/files", "/api/v1/files"})
+@RequestMapping("/api/v1/files")
 @RequiredArgsConstructor
 @Slf4j
 public class FileController {
 
-    private final FileService fileService;
-    private final MetadataService metadataService;
-    
-    private static final int MAX_PAGE_SIZE = 100;
+  private final FileService fileService;
+  private final MetadataService metadataService;
 
-    @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @Operation(summary = "Upload a file to storage and create metadata")
-    public ResponseEntity<FileDto> uploadFile(
-            @RequestPart("file") MultipartFile file,
-            @AuthenticationPrincipal User currentUser) {
-        
-        FileMetadata savedMetadata = fileService.upload(currentUser, file);
+  private static final int MAX_PAGE_SIZE = 100;
 
-        AuditLogger.log("file_upload", Map.of(
+  @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @Operation(summary = "Upload a file to storage and create metadata")
+  public ResponseEntity<FileDto> uploadFile(
+      @RequestPart("file") MultipartFile file, @AuthenticationPrincipal User currentUser) {
+
+    FileMetadata savedMetadata = fileService.upload(currentUser, file);
+
+    AuditLogger.log(
+        "file_upload",
+        Map.of(
             "user", currentUser.getUsername(),
             "fileId", savedMetadata.getId(),
             "filename", savedMetadata.getOriginalFilename(),
-            "size", savedMetadata.getSize()
-        ));
-        
-        return ResponseEntity.ok(FileDto.from(savedMetadata));
-    }
+            "size", savedMetadata.getSize()));
 
-    @GetMapping("/download/{id}")
-    @Operation(summary = "Generate a presigned download URL for your file")
-    public ResponseEntity<DownloadUrlResponse> downloadFile(@PathVariable Long id, @AuthenticationPrincipal User currentUser) {
-        String downloadUrl = fileService.presignDownloadUrl(currentUser, id);
+    return ResponseEntity.ok(FileDto.from(savedMetadata));
+  }
 
-        AuditLogger.log("file_download_url", Map.of(
-                "user", currentUser.getUsername(),
-                "fileId", id
-        ));
+  @GetMapping("/download/{id}")
+  @Operation(summary = "Generate a presigned download URL for your file")
+  public ResponseEntity<DownloadUrlResponse> downloadFile(
+      @PathVariable Long id, @AuthenticationPrincipal User currentUser) {
+    String downloadUrl = fileService.presignDownloadUrl(currentUser, id);
 
-        return ResponseEntity.ok(DownloadUrlResponse.builder().downloadUrl(downloadUrl).build());
-    }
+    AuditLogger.log("file_download_url", Map.of("user", currentUser.getUsername(), "fileId", id));
 
-    @DeleteMapping("/{id}")
-    @Operation(summary = "Delete your file")
-    public ResponseEntity<?> deleteFile(@PathVariable Long id, @AuthenticationPrincipal User currentUser) {
-        fileService.delete(currentUser, id);
+    return ResponseEntity.ok(DownloadUrlResponse.builder().downloadUrl(downloadUrl).build());
+  }
 
-        AuditLogger.log("file_delete", Map.of(
-                "user", currentUser.getUsername(),
-                "fileId", id
-        ));
+  @DeleteMapping("/{id}")
+  @Operation(summary = "Delete your file")
+  public ResponseEntity<?> deleteFile(
+      @PathVariable Long id, @AuthenticationPrincipal User currentUser) {
+    fileService.delete(currentUser, id);
 
-        return ResponseEntity.noContent().build();
-    }
+    AuditLogger.log("file_delete", Map.of("user", currentUser.getUsername(), "fileId", id));
 
-    @GetMapping
-    @Operation(summary = "List your files (paginated)")
-    public ResponseEntity<PagedFileResponse> getUserFiles(
-            @AuthenticationPrincipal User currentUser,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
+    return ResponseEntity.noContent().build();
+  }
 
-        int clampedSize = Math.max(1, Math.min(size, MAX_PAGE_SIZE));
-        PageRequest pageable = PageRequest.of(page, clampedSize);
-        
-        Page<FileMetadata> userFilesPage = metadataService.findByUser(currentUser, pageable);
-        
-        List<FileListResponse> files = userFilesPage.getContent().stream()
-                .map(file -> FileListResponse.builder()
+  @GetMapping
+  @Operation(summary = "List your files (paginated)")
+  public ResponseEntity<PagedFileResponse> getUserFiles(
+      @AuthenticationPrincipal User currentUser,
+      @RequestParam(defaultValue = "0") int page,
+      @RequestParam(defaultValue = "20") int size) {
+
+    int clampedSize = Math.max(1, Math.min(size, MAX_PAGE_SIZE));
+    PageRequest pageable = PageRequest.of(page, clampedSize);
+
+    Page<FileMetadata> userFilesPage = metadataService.findByUser(currentUser, pageable);
+
+    List<FileListResponse> files =
+        userFilesPage.getContent().stream()
+            .map(
+                file ->
+                    FileListResponse.builder()
                         .id(file.getId())
                         .originalFilename(file.getOriginalFilename())
                         .size(file.getSize())
                         .contentType(file.getContentType())
                         .uploadTimestamp(file.getUploadTimestamp())
                         .build())
-                .collect(Collectors.toList());
-        
-        PagedFileResponse response = PagedFileResponse.builder()
-                .files(files)
-                .currentPage(userFilesPage.getNumber())
-                .totalPages(userFilesPage.getTotalPages())
-                .totalElements(userFilesPage.getTotalElements())
-                .hasNext(userFilesPage.hasNext())
-                .hasPrevious(userFilesPage.hasPrevious())
-                .build();
-        
-        return ResponseEntity.ok(response);
-    }
-} 
+            .collect(Collectors.toList());
+
+    PagedFileResponse response =
+        PagedFileResponse.builder()
+            .files(files)
+            .currentPage(userFilesPage.getNumber())
+            .totalPages(userFilesPage.getTotalPages())
+            .totalElements(userFilesPage.getTotalElements())
+            .hasNext(userFilesPage.hasNext())
+            .hasPrevious(userFilesPage.hasPrevious())
+            .build();
+
+    return ResponseEntity.ok(response);
+  }
+}
