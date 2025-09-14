@@ -9,3 +9,7 @@ spring:
       ddl-auto: validate
     show-sql: false
 
+# AWS region required for AwsProperties validation (even when AwsConfig is disabled)
+aws:
+  region: us-east-1
+
