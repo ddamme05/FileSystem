@@ -13,29 +13,28 @@ import java.io.IOException;
 @Component
 public class CacheControlFilter extends OncePerRequestFilter {
 
-    @Override
-    protected void doFilterInternal(
-            @NonNull HttpServletRequest request,
-            @NonNull HttpServletResponse response,
-            @NonNull FilterChain filterChain
-    ) throws ServletException, IOException {
-        
-        String path = request.getRequestURI();
-        
-        if (isSensitiveEndpoint(path)) {
-            response.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
-            response.setHeader("Pragma", "no-cache");
-            response.setHeader("Expires", "0");
-        }
-        
-        filterChain.doFilter(request, response);
+  @Override
+  protected void doFilterInternal(
+      @NonNull HttpServletRequest request,
+      @NonNull HttpServletResponse response,
+      @NonNull FilterChain filterChain)
+      throws ServletException, IOException {
+
+    String path = request.getRequestURI();
+
+    if (isSensitiveEndpoint(path)) {
+      response.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
+      response.setHeader("Pragma", "no-cache");
+      response.setHeader("Expires", "0");
     }
-    
-    private boolean isSensitiveEndpoint(String path) {
-        return path.startsWith("/api/v1/auth/") ||  
-               path.startsWith("/files") ||         
-               path.startsWith("/api/v1/files") ||  
-               path.contains("/download/") ||
-               path.contains("/upload");         
-    }
+
+    filterChain.doFilter(request, response);
+  }
+
+  private boolean isSensitiveEndpoint(String path) {
+    return path.startsWith("/api/v1/auth/")
+        || path.startsWith("/api/v1/files")
+        || path.contains("/download/")
+        || path.contains("/upload");
+  }
 }
