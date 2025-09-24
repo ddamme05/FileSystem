@@ -105,6 +105,11 @@ public class SecurityConfig {
                       "/actuator/info")
                   .permitAll();
 
+              // Allow prometheus endpoint in dev only (prod should use secure metrics collection)
+              if (!isProductionProfile()) {
+                authorize.requestMatchers("/actuator/prometheus").permitAll();
+              }
+
               // Disable Swagger in production
               if (!isProductionProfile()) {
                 authorize
@@ -136,8 +141,8 @@ public class SecurityConfig {
         .addFilterBefore(cacheControlFilter, UsernamePasswordAuthenticationFilter.class)
         .addFilterBefore(requestCorrelationFilter, UsernamePasswordAuthenticationFilter.class)
         .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
-        .addFilterAfter(accessLogFilter, JwtAuthenticationFilter.class)
-        .addFilterAfter(rateLimitFilter, AccessLogFilter.class);
+        .addFilterBefore(rateLimitFilter, JwtAuthenticationFilter.class)
+        .addFilterAfter(accessLogFilter, JwtAuthenticationFilter.class);
 
     return http.build();
   }

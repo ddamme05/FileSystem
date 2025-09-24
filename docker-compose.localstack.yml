@@ -1,0 +1,21 @@
+services:
+  localstack:
+    image: localstack/localstack:3
+    ports: ["4566:4566"]
+    environment:
+      SERVICES: s3
+      DEBUG: 1
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4566/_localstack/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    environment:
+      AWS_ENDPOINT_URL_S3: http://localstack:4566
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+    depends_on:
+      localstack:
+        condition: service_healthy

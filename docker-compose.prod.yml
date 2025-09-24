@@ -4,6 +4,7 @@
 services:
   app:
     environment:
+      DD_SERVICE: file-system-app
       SPRING_PROFILES_ACTIVE: prod  # ← Override to prod profile
       DD_ENV: prod                  # ← Production Datadog environment
       # Add any other prod-specific env vars here
