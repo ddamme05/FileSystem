@@ -1,12 +1,18 @@
 package org.ddamme.security.filter;
 
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
+import io.jsonwebtoken.MalformedJwtException;
+import io.jsonwebtoken.UnsupportedJwtException;
+import io.jsonwebtoken.security.SignatureException;
+import io.micrometer.core.instrument.MeterRegistry;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.ddamme.metrics.Metrics;
 import org.ddamme.security.service.JwtService;
 import org.slf4j.MDC;
 import org.springframework.lang.NonNull;
@@ -27,6 +33,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
   private final JwtService jwtService;
   private final UserDetailsService userDetailsService;
+  private final MeterRegistry meterRegistry;
 
   @Override
   protected void doFilterInternal(
@@ -58,6 +65,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
       }
     } catch (JwtException e) {
+      // Categorize JWT failure reason for better observability
+      String reason = determineJwtFailureReason(e);
+      Metrics.increment(meterRegistry, "auth.jwt.invalid", "reason", reason);
       log.debug("Invalid JWT token: {}", e.getMessage());
     }
 
@@ -66,5 +76,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     } finally {
       MDC.remove("user");
     }
+  }
+
+  /**
+   * Determines the reason for JWT validation failure for better observability.
+   * Uses instanceof checks for stable, reliable categorization.
+   */
+  private String determineJwtFailureReason(JwtException e) {
+    if (e instanceof ExpiredJwtException) return "expired";
+    if (e instanceof SignatureException) return "signature";
+    if (e instanceof MalformedJwtException) return "malformed";
+    if (e instanceof UnsupportedJwtException) return "unsupported";
+    // Check message for issuer-related failures (less common, no specific exception type)
+    if (e.getMessage() != null && e.getMessage().toLowerCase().contains("issuer")) return "issuer";
+    return "other";
   }
 }

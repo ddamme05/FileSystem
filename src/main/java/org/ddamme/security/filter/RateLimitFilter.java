@@ -5,7 +5,6 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.Bucket;
-import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -13,6 +12,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.ddamme.dto.ErrorResponse;
+import org.ddamme.metrics.Metrics;
 import org.ddamme.security.config.RateLimitProperties;
 import org.springframework.http.HttpHeaders;
 import org.springframework.lang.NonNull;
@@ -40,10 +40,9 @@ public class RateLimitFilter extends OncePerRequestFilter {
           .expireAfterAccess(Duration.ofMinutes(30))
           .build();
 
-  // Lazy-initialized counters for observability
-  private volatile Counter uploadRateLimitCounter;
-  private volatile Counter downloadRateLimitCounter;
-  private volatile Counter loginRateLimitCounter;
+  // optional: toggle high-cardinality tag in non-prod only
+  private static final boolean INCLUDE_PRINCIPAL_TAG =
+      !"prod".equalsIgnoreCase(System.getenv().getOrDefault("DD_ENV", "dev"));
 
   @Override
   protected void doFilterInternal(
@@ -82,7 +81,15 @@ public class RateLimitFilter extends OncePerRequestFilter {
       filterChain.doFilter(request, response);
     } else {
       // Increment observability counter for alerting on abuse
-      incrementRateLimitCounter(routeKey);
+      String principal = principalKey != null ? principalKey : clientIp(request);
+      if (INCLUDE_PRINCIPAL_TAG) {
+        Metrics.increment(meterRegistry, "http.ratelimit.rejects",
+            "route", routeKey, "limit", String.valueOf(perMinute),
+            "principal", principal);
+      } else {
+        Metrics.increment(meterRegistry, "http.ratelimit.rejects",
+            "route", routeKey, "limit", String.valueOf(perMinute));
+      }
 
       response.setStatus(429);
       response.setContentType("application/json");
@@ -161,29 +168,5 @@ public class RateLimitFilter extends OncePerRequestFilter {
     return null;
   }
 
-  private void incrementRateLimitCounter(String routeKey) {
-    if ("upload".equals(routeKey)) {
-      if (uploadRateLimitCounter == null) {
-        uploadRateLimitCounter =
-            Counter.builder("http.ratelimit.rejects")
-                .tag("route", "upload")
-                .register(meterRegistry);
-      }
-      uploadRateLimitCounter.increment();
-    } else if ("download".equals(routeKey)) {
-      if (downloadRateLimitCounter == null) {
-        downloadRateLimitCounter =
-            Counter.builder("http.ratelimit.rejects")
-                .tag("route", "download")
-                .register(meterRegistry);
-      }
-      downloadRateLimitCounter.increment();
-    } else if ("login".equals(routeKey)) {
-      if (loginRateLimitCounter == null) {
-        loginRateLimitCounter =
-            Counter.builder("http.ratelimit.rejects").tag("route", "login").register(meterRegistry);
-      }
-      loginRateLimitCounter.increment();
-    }
-  }
+  // (old cached counters removed)
 }
