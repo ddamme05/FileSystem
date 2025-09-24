@@ -6,6 +6,7 @@ import org.ddamme.database.model.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -19,4 +20,7 @@ public interface MetadataRepository extends JpaRepository<FileMetadata, Long> {
   Page<FileMetadata> findByUserOrderByUploadTimestampDesc(User user, Pageable pageable);
 
   Optional<FileMetadata> findByIdAndUserId(Long id, Long userId);
+
+  @Query("select coalesce(sum(f.size), 0) from FileMetadata f")
+  long sumSizes();
 }
