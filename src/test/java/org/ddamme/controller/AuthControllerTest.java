@@ -1,6 +1,9 @@
 package org.ddamme.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.ddamme.database.model.Role;
 import org.ddamme.database.model.User;
 import org.ddamme.dto.LoginRequest;
@@ -40,7 +43,11 @@ class AuthControllerTest {
     userService = Mockito.mock(UserService.class);
     jwtService = Mockito.mock(JwtService.class);
     authenticationManager = Mockito.mock(AuthenticationManager.class);
-    AuthController controller = new AuthController(userService, jwtService, authenticationManager);
+    
+    // Use a real SimpleMeterRegistry for unit tests - simpler than complex mocking
+    MeterRegistry meterRegistry = new SimpleMeterRegistry();
+    
+    AuthController controller = new AuthController(userService, jwtService, authenticationManager, meterRegistry);
     validator.afterPropertiesSet();
     mockMvc =
         MockMvcBuilders.standaloneSetup(controller)

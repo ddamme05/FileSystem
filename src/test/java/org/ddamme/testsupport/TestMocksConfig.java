@@ -1,5 +1,6 @@
 package org.ddamme.testsupport;
 
+import io.micrometer.core.instrument.MeterRegistry;
 import org.ddamme.security.service.JwtService;
 import org.ddamme.service.UserService;
 import org.mockito.Mockito;
@@ -29,5 +30,10 @@ public class TestMocksConfig {
   @Bean
   public UserDetailsService userDetailsService() {
     return Mockito.mock(UserDetailsService.class);
+  }
+  
+  @Bean
+  public MeterRegistry meterRegistry() {
+    return Mockito.mock(MeterRegistry.class);
   }
 }
