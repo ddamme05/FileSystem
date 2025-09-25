@@ -1,5 +1,6 @@
 package org.ddamme.controller;
 
+import io.micrometer.core.instrument.MeterRegistry;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -7,6 +8,7 @@ import org.ddamme.database.model.User;
 import org.ddamme.dto.AuthResponse;
 import org.ddamme.dto.LoginRequest;
 import org.ddamme.dto.RegisterRequest;
+import org.ddamme.metrics.Metrics;
 import org.ddamme.security.service.JwtService;
 import org.ddamme.service.UserService;
 import org.springframework.http.ResponseEntity;
@@ -26,6 +28,7 @@ public class AuthController {
   private final UserService userService;
   private final JwtService jwtService;
   private final AuthenticationManager authenticationManager;
+  private final MeterRegistry meterRegistry;
 
   @PostMapping("/register")
   @Operation(summary = "Register a new user and receive a JWT")
@@ -50,6 +53,10 @@ public class AuthController {
             new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword()));
     User user = (User) authentication.getPrincipal();
     String token = jwtService.generateToken(user);
+    
+    // Track successful login
+    Metrics.increment(meterRegistry, "auth.login.count", "result", "success");
+    
     AuthResponse response =
         AuthResponse.builder()
             .token(token)

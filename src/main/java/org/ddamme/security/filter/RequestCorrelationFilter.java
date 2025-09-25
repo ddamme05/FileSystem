@@ -20,7 +20,6 @@ public class RequestCorrelationFilter extends OncePerRequestFilter {
 
   public static final String HEADER_REQUEST_ID = "X-Request-ID";
   public static final String MDC_REQUEST_ID = "request_id";
-  public static final String MDC_TRACE_ID = "trace_id";
 
   @Override
   protected void doFilterInternal(
@@ -32,16 +31,13 @@ public class RequestCorrelationFilter extends OncePerRequestFilter {
         Optional.ofNullable(incomingRequestId)
             .filter(s -> !s.isBlank())
             .orElse(UUID.randomUUID().toString());
-    String traceId = UUID.randomUUID().toString();
 
     MDC.put(MDC_REQUEST_ID, requestId);
-    MDC.put(MDC_TRACE_ID, traceId);
     response.setHeader(HEADER_REQUEST_ID, requestId);
     try {
       filterChain.doFilter(request, response);
     } finally {
       MDC.remove(MDC_REQUEST_ID);
-      MDC.remove(MDC_TRACE_ID);
     }
   }
 }

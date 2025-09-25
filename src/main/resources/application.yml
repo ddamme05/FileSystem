@@ -36,7 +36,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info
+        include: health,info,prometheus
   endpoint:
     health:
       probes:
@@ -45,16 +45,16 @@ management:
 
   metrics:
     export:
-      statsd:
-        enabled: ${DD_ENABLE_METRICS:false}
-        flavor: datadog
-        host: ${DD_AGENT_HOST:127.0.0.1}
-        port: ${DD_DOGSTATSD_PORT:8125}
+      otlp:
+        enabled: true
+        url: ${MANAGEMENT_OTLP_METRICS_EXPORT_URL:http://datadog:4318/v1/metrics}
+        step: ${MANAGEMENT_OTLP_METRICS_EXPORT_STEP:10s}
     tags:
       application: ${spring.application.name}
       service: ${DD_SERVICE:file-system-app}
       env: ${DD_ENV:dev}
       version: ${DD_VERSION:1.0.0}
+      region: ${AWS_REGION:us-east-1}
     distribution:
       percentiles-histogram:
         http.server.requests: true
@@ -64,6 +64,12 @@ aws:
   s3:
     bucket-name: ${AWS_S3_BUCKET:filesystem-s3}
     presign-ttl-minutes: ${AWS_S3_PRESIGN_TTL_MINUTES:5}
+
+metrics:
+  s3:
+    health:
+      enabled: true
+      period: 60000
 
 security:
   jwt:
@@ -93,3 +99,7 @@ security:
       - X-Request-ID
       - Content-Disposition
       - Location
+
+logging:
+  level:
+    software.amazon.awssdk: DEBUG

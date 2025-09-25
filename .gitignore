@@ -10,6 +10,7 @@ bin/
 !**/src/test/**/out/
 !**/src/main/**/bin/
 !**/src/test/**/bin/
+aws/
 
 # Environment & secrets
 .env
@@ -87,3 +88,11 @@ feature_improvements_snapshot_current.md
 
 # Project planning
 PROJECT_PLAN.md
+# Observability snapshots (temporary)
+observability_snapshot_*.md
+
+# LocalStack data directory
+.localstack/
+
+# Observability snapshot (temporary)
+observability_snapshot.md

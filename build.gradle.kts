@@ -22,18 +22,14 @@ repositories {
 
 dependencies {
 
-    developmentOnly("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.9")
+    developmentOnly("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.13")
     developmentOnly("org.springframework.boot:spring-boot-devtools")
 
     runtimeOnly("io.jsonwebtoken:jjwt-impl:0.12.6")
     runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.12.6")
     runtimeOnly("org.postgresql:postgresql")
-    runtimeOnly("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.9")
 
     compileOnly("org.projectlombok:lombok")
-    compileOnly("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.9")
-
-    testRuntimeOnly("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.9")
 
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
@@ -42,13 +38,16 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.springframework.boot:spring-boot-starter-aop")
     implementation("net.logstash.logback:logstash-logback-encoder:7.4")
-    implementation("io.micrometer:micrometer-registry-statsd")
+    implementation("io.micrometer:micrometer-registry-otlp")
     implementation("org.flywaydb:flyway-core")
     implementation("org.flywaydb:flyway-database-postgresql")
+    implementation(platform("software.amazon.awssdk:bom:2.33.13"))
     implementation("software.amazon.awssdk:s3")
+    implementation("software.amazon.awssdk:sts")
     implementation("io.jsonwebtoken:jjwt-api:0.12.6")
     implementation("com.bucket4j:bucket4j-core:8.10.1")
     implementation("com.github.ben-manes.caffeine:caffeine:3.2.2")
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.9")
     annotationProcessor("org.projectlombok:lombok")
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
@@ -65,7 +64,6 @@ jacoco {
 
 dependencyManagement {
     imports {
-        mavenBom("software.amazon.awssdk:bom:2.31.72")
         mavenBom("org.testcontainers:testcontainers-bom:1.20.2")
     }
 }
