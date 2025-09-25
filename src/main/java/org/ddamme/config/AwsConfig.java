@@ -35,7 +35,7 @@ public class AwsConfig {
             builder.endpointOverride(URI.create(endpoint))
                     .serviceConfiguration(
                             S3Configuration.builder()
-                                    .pathStyleAccessEnabled(true) // Modern, recommended way
+                                    .pathStyleAccessEnabled(true)
                                     .build()
                     );
         } else {
