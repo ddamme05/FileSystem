@@ -5,8 +5,8 @@ services:
   app:
     environment:
       DD_SERVICE: file-system-app
-      SPRING_PROFILES_ACTIVE: prod 
-      DD_ENV: prod         
+      SPRING_PROFILES_ACTIVE: prod
+      DD_ENV: prod
       
   datadog:
     environment:
