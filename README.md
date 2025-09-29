@@ -80,9 +80,6 @@ docker compose down -v
 # Build
 ./gradlew build
 
-# Code formatting
-./gradlew spotlessApply
-
 # Test coverage reports
 ./gradlew test jacocoTestReport              # Unit test coverage only
 ./gradlew jacocoMergedReport                 # Unit + Integration test coverage

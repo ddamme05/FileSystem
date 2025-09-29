@@ -5,7 +5,6 @@ plugins {
     id("org.springframework.boot") version "3.5.3"
     id("io.spring.dependency-management") version "1.1.7"
     id("java")
-    id("com.diffplug.spotless") version "7.2.1"
     id("jacoco")
 }
 
@@ -47,7 +46,7 @@ dependencies {
     implementation("io.jsonwebtoken:jjwt-api:0.12.6")
     implementation("com.bucket4j:bucket4j-core:8.10.1")
     implementation("com.github.ben-manes.caffeine:caffeine:3.2.2")
-    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.9")
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.13")
     annotationProcessor("org.projectlombok:lombok")
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
@@ -165,17 +164,4 @@ tasks.register<JacocoReport>("jacocoMergedReport") {
     }
 }
 
-spotless {
-    java {
-        target("src/**/*.java")
-        importOrder()
-        removeUnusedImports()
-        googleJavaFormat("1.22.0")
-    }
-    // Keep gradle scripts neat
-    format("gradle") {
-        target("**/*.gradle.kts")
-        trimTrailingWhitespace()
-        endWithNewline()
-    }
-}
+

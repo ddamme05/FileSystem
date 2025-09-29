@@ -64,7 +64,27 @@ public class FileController {
     return ResponseEntity.ok(DownloadUrlResponse.builder().downloadUrl(downloadUrl).build());
   }
 
-  @DeleteMapping("/{id}")
+    @GetMapping("/download/{id}/redirect")
+    @Operation(summary = "Short link that redirects to a presigned S3 URL")
+    public ResponseEntity<Void> redirectToPresigned(
+            @PathVariable Long id,
+            @AuthenticationPrincipal User currentUser
+    ) {
+        // AuthZ + ownership checks happen inside FileService via MetadataService
+        String url = fileService.presignDownloadUrl(currentUser, id);
+
+        AuditLogger.log("file_download_redirect",
+                Map.of("user", currentUser.getUsername(), "fileId", id));
+
+        // 302 is perfect for a browser GET. We also prevent caches from storing the redirect.
+        return ResponseEntity.status(302)
+                .cacheControl(org.springframework.http.CacheControl.noStore())
+                .header(org.springframework.http.HttpHeaders.LOCATION, url)
+                .build();
+    }
+
+
+    @DeleteMapping("/{id}")
   @Operation(summary = "Delete your file")
   public ResponseEntity<?> deleteFile(
       @PathVariable Long id, @AuthenticationPrincipal User currentUser) {
