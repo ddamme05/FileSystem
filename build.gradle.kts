@@ -164,18 +164,3 @@ tasks.register<JacocoReport>("jacocoMergedReport") {
         html.required.set(true)
     }
 }
-
-spotless {
-    java {
-        target("src/**/*.java")
-        importOrder()
-        removeUnusedImports()
-        googleJavaFormat("1.22.0")
-    }
-    // Keep gradle scripts neat
-    format("gradle") {
-        target("**/*.gradle.kts")
-        trimTrailingWhitespace()
-        endWithNewline()
-    }
-}
