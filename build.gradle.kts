@@ -5,7 +5,6 @@ plugins {
     id("org.springframework.boot") version "3.5.3"
     id("io.spring.dependency-management") version "1.1.7"
     id("java")
-    id("com.diffplug.spotless") version "7.2.1"
     id("jacoco")
 }
 
@@ -162,20 +161,5 @@ tasks.register<JacocoReport>("jacocoMergedReport") {
     reports {
         xml.required.set(true)
         html.required.set(true)
-    }
-}
-
-spotless {
-    java {
-        target("src/**/*.java")
-        importOrder()
-        removeUnusedImports()
-        googleJavaFormat("1.22.0")
-    }
-    // Keep gradle scripts neat
-    format("gradle") {
-        target("**/*.gradle.kts")
-        trimTrailingWhitespace()
-        endWithNewline()
     }
 }
