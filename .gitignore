@@ -11,6 +11,19 @@ bin/
 !**/src/main/**/bin/
 !**/src/test/**/bin/
 aws/
+*.md
+!**/README.md
+
+# Frontend build outputs and dependencies
+client/node_modules/
+client/dist/
+client/build/
+client/.vite/
+client/coverage/
+client/playwright-report/
+client/test-results/
+client/.playwright/
+client/storybook-static/
 
 # Environment & secrets
 .env
