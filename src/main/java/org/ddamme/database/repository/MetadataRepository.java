@@ -17,7 +17,8 @@ import java.util.Optional;
 public interface MetadataRepository extends JpaRepository<FileMetadata, Long> {
   List<FileMetadata> findByUserOrderByUploadTimestampDesc(User user);
 
-  Page<FileMetadata> findByUserOrderByUploadTimestampDesc(User user, Pageable pageable);
+  @Query("SELECT file FROM FileMetadata file WHERE file.user.id = :userId ORDER BY file.uploadTimestamp DESC")
+  Page<FileMetadata> findByUserIdOrderByUploadTimestampDesc(Long userId, Pageable pageable);
 
   Optional<FileMetadata> findByIdAndUserId(Long id, Long userId);
 
