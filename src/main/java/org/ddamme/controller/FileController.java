@@ -54,14 +54,38 @@ public class FileController {
   }
 
   @GetMapping("/download/{id}")
-  @Operation(summary = "Generate a presigned download URL for your file")
-  public ResponseEntity<DownloadUrlResponse> downloadFile(
+  @Operation(summary = "Redirect to presigned download URL for your file")
+  public ResponseEntity<Void> downloadFile(
+      @PathVariable Long id, @AuthenticationPrincipal User currentUser) {
+    String downloadUrl = fileService.presignDownloadUrl(currentUser, id);
+
+    AuditLogger.log("file_download_url", Map.of("user", currentUser.getUsername(), "fileId", id));
+
+    return ResponseEntity.status(302)
+        .header("Location", downloadUrl)
+        .build();
+  }
+
+  @GetMapping("/download/{id}/redirect")
+  @Operation(summary = "Generate a presigned download URL for your file (returns JSON)")
+  public ResponseEntity<DownloadUrlResponse> downloadFileRedirect(
       @PathVariable Long id, @AuthenticationPrincipal User currentUser) {
     String downloadUrl = fileService.presignDownloadUrl(currentUser, id);
 
     AuditLogger.log("file_download_url", Map.of("user", currentUser.getUsername(), "fileId", id));
 
     return ResponseEntity.ok(DownloadUrlResponse.builder().downloadUrl(downloadUrl).build());
+  }
+
+  @GetMapping("/view/{id}/redirect")
+  @Operation(summary = "Generate a presigned view URL for your file (inline Content-Disposition)")
+  public ResponseEntity<DownloadUrlResponse> viewFile(
+      @PathVariable Long id, @AuthenticationPrincipal User currentUser) {
+    String viewUrl = fileService.presignViewUrl(currentUser, id);
+
+    AuditLogger.log("file_view_url", Map.of("user", currentUser.getUsername(), "fileId", id));
+
+    return ResponseEntity.ok(DownloadUrlResponse.builder().downloadUrl(viewUrl).build());
   }
 
   @DeleteMapping("/{id}")
@@ -82,10 +106,14 @@ public class FileController {
       @RequestParam(defaultValue = "0") int page,
       @RequestParam(defaultValue = "20") int size) {
 
+    log.debug("Fetching files for user: {} (ID: {})", currentUser.getUsername(), currentUser.getId());
+
     int clampedSize = Math.max(1, Math.min(size, MAX_PAGE_SIZE));
     PageRequest pageable = PageRequest.of(page, clampedSize);
 
     Page<FileMetadata> userFilesPage = metadataService.findByUser(currentUser, pageable);
+    
+    log.debug("Found {} files for user {}", userFilesPage.getTotalElements(), currentUser.getUsername());
 
     List<FileListResponse> files =
         userFilesPage.getContent().stream()
