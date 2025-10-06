@@ -67,6 +67,7 @@ services:
 
       # AWS
       AWS_REGION: us-east-1
+      AWS_S3_BUCKET: ${AWS_S3_BUCKET:-filesystem-s3}
       AWS_PROFILE: file-system-app-role
       AWS_SHARED_CREDENTIALS_FILE: /aws/credentials
       AWS_CONFIG_FILE: /aws/config
@@ -76,13 +77,38 @@ services:
       - ${HOME}/.aws:/aws:ro
     secrets: [db_password, jwt_secret]
     healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://localhost:8080/actuator/health"]
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/actuator/health | grep -q '\"status\":\"UP\"' || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 5
       start_period: 60s
     labels:
       com.datadoghq.ad.logs: '[{"source":"java","service":"file-system-app"}]'
+
+  frontend:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    image: file-system-frontend:local
+    restart: unless-stopped
+    depends_on:
+      app:
+        condition: service_healthy
+    ports: ["3000:80"]
+    # Note: Not using user: "101:101" because tmpfs mounts need root to set permissions
+    # Nginx drops privileges internally to nginx user for worker processes
+    cap_drop: [ALL]
+    cap_add: [NET_BIND_SERVICE, CHOWN, SETUID, SETGID]  # Needed for nginx to drop privileges
+    security_opt: ["no-new-privileges:true"]
+    init: true
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    labels:
+      com.datadoghq.ad.logs: '[{"source":"nginx","service":"file-system-frontend"}]'
 
   datadog:
     image: gcr.io/datadoghq/agent:7
