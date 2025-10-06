@@ -60,6 +60,17 @@ public class TestStorageConfig {
     }
 
     @Override
+    public String generatePresignedViewUrl(String key, String originalName) {
+      if (!keys.contains(key)) throw new StorageOperationException("Unknown storage key: " + key);
+      if (originalName == null || originalName.isBlank()) {
+        return "http://localhost/fake/view/" + key;
+      }
+      String cd = "inline; filename=\"" + originalName + "\"";
+      String q = URLEncoder.encode(cd, StandardCharsets.UTF_8);
+      return "http://localhost/fake/view/" + key + "?response-content-disposition=" + q;
+    }
+
+    @Override
     public void delete(String storageKey) {
       keys.remove(storageKey);
     }

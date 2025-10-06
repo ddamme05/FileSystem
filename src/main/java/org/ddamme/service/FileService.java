@@ -86,6 +86,19 @@ public class FileService {
     }
   }
 
+  public String presignViewUrl(User user, Long fileId) {
+    try {
+      FileMetadata meta = metadataService.findOwnedById(user, fileId);
+      String presignedUrl = storageService.generatePresignedViewUrl(
+          meta.getStorageKey(), meta.getOriginalFilename());
+      Metrics.increment(meterRegistry, "fs.view.presign.count", "result", "success");
+      return presignedUrl;
+    } catch (RuntimeException e) {
+      Metrics.increment(meterRegistry, "fs.view.presign.count", "result", "failure");
+      throw e;
+    }
+  }
+
   public void delete(User user, Long fileId) {
     try {
       FileMetadata meta = metadataService.findOwnedById(user, fileId);

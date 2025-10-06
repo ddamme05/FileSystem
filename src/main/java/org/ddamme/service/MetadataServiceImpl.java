@@ -62,6 +62,6 @@ public class MetadataServiceImpl implements MetadataService {
   @Transactional(readOnly = true)
   @Observed(name = "db.file_metadata.findByUserPaged")
   public Page<FileMetadata> findByUser(User user, Pageable pageable) {
-    return metadataRepository.findByUserOrderByUploadTimestampDesc(user, pageable);
+    return metadataRepository.findByUserIdOrderByUploadTimestampDesc(user.getId(), pageable);
   }
 }

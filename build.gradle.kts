@@ -21,7 +21,6 @@ repositories {
 
 dependencies {
 
-    developmentOnly("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.13")
     developmentOnly("org.springframework.boot:spring-boot-devtools")
 
     runtimeOnly("io.jsonwebtoken:jjwt-impl:0.12.6")
@@ -46,7 +45,7 @@ dependencies {
     implementation("io.jsonwebtoken:jjwt-api:0.12.6")
     implementation("com.bucket4j:bucket4j-core:8.10.1")
     implementation("com.github.ben-manes.caffeine:caffeine:3.2.2")
-    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.9")
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.13")
     annotationProcessor("org.projectlombok:lombok")
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
