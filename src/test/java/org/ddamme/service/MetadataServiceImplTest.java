@@ -101,7 +101,7 @@ class MetadataServiceImplTest {
                 .build());
     Pageable pageable = PageRequest.of(0, 10);
     Page<FileMetadata> page = new PageImpl<>(list, pageable, 1);
-    when(metadataRepository.findByUserOrderByUploadTimestampDesc(user, pageable)).thenReturn(page);
+    when(metadataRepository.findByUserIdOrderByUploadTimestampDesc(user.getId(), pageable)).thenReturn(page);
     Page<FileMetadata> resultPage = metadataService.findByUser(user, pageable);
     assertThat(resultPage.getTotalElements()).isEqualTo(1);
     assertThat(resultPage.getContent()).containsExactlyElementsOf(list);

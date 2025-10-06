@@ -25,6 +25,7 @@ import software.amazon.awssdk.services.s3.model.CreateBucketRequest;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -106,11 +107,15 @@ class FileControllerS3IT extends BaseIntegrationTest {
     Number idAsNumber = JsonPath.read(listRes.getResponse().getContentAsString(), "$.files[0].id");
     Long id = idAsNumber.longValue();
 
-    // Presign
-    mockMvc
+    // Presign - expect 302 redirect to S3 URL
+    MvcResult presignRes = mockMvc
         .perform(get("/api/v1/files/download/" + id).header("Authorization", "Bearer " + token))
-        .andExpect(status().isOk())
-        .andExpect(jsonPath("$.downloadUrl").isString());
+        .andExpect(status().isFound())  // 302
+        .andExpect(header().exists("Location"))
+        .andReturn();
+    
+    String redirectUrl = presignRes.getResponse().getHeader("Location");
+    assertThat(redirectUrl).as("Should redirect to S3 presigned URL").isNotBlank();
 
     // Delete
     mockMvc
@@ -175,16 +180,15 @@ class FileControllerS3IT extends BaseIntegrationTest {
     Number idAsNumber = JsonPath.read(listRes.getResponse().getContentAsString(), "$.files[0].id");
     Long id = idAsNumber.longValue();
 
-    // Get presigned URL
+    // Get presigned URL - expect 302 redirect
     MvcResult presignRes =
         mockMvc
             .perform(get("/api/v1/files/download/" + id).header("Authorization", "Bearer " + token))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.downloadUrl").isString())
+            .andExpect(status().isFound())  // 302
+            .andExpect(header().exists("Location"))
             .andReturn();
 
-    String downloadUrl =
-        JsonPath.read(presignRes.getResponse().getContentAsString(), "$.downloadUrl");
+    String downloadUrl = presignRes.getResponse().getHeader("Location");
 
     // Verify the presigned URL contains RFC 5987 Content-Disposition parameters
     // The URL should contain both filename (ASCII fallback) and filename* (UTF-8 encoded)

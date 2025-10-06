@@ -11,5 +11,7 @@ public interface StorageService {
 
   String generatePresignedDownloadUrl(String key, String originalName);
 
+  String generatePresignedViewUrl(String key, String originalName);
+
   void delete(String storageKey);
 }

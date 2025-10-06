@@ -96,3 +96,13 @@ observability_snapshot_*.md
 
 # Observability snapshot (temporary)
 observability_snapshot.md
+
+# Frontend snapshot (temporary)
+frontend_snapshot.md
+
+# Frontend docs snapshot (temporary)
+frontend_docs_snapshot.md
+
+# Client snapshots
+client_code_snapshot.md
+client_config_snapshot.md

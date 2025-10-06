@@ -138,6 +138,50 @@ public class S3StorageService implements StorageService {
     }
 
     @Override
+    @Observed(name = "s3.presign.view")
+    public String generatePresignedViewUrl(String key, String originalName) {
+        Timer.Sample sample = Timer.start(meterRegistry);
+
+        try {
+            String bucketName = awsProperties.getS3().getBucketName();
+
+            // Build Content-Disposition header with "inline" for browser viewing
+            GetObjectRequest.Builder requestBuilder = GetObjectRequest.builder()
+                    .bucket(bucketName)
+                    .key(key);
+            
+            if (originalName != null && !originalName.isBlank()) {
+                // Create RFC 5987 compliant Content-Disposition for presigned URL
+                String ascii = originalName
+                        .replaceAll("[^\\x20-\\x7E]", "_")
+                        .replace("\"", "'")
+                        .replace("\\", "_");
+                String rfc5987 = FileUtils.rfc5987Encode(originalName);
+                // KEY DIFFERENCE: "inline" instead of "attachment"
+                String contentDisposition = "inline; filename=\"" + ascii + "\"; filename*=UTF-8''" + rfc5987;
+                
+                requestBuilder.responseContentDisposition(contentDisposition);
+            }
+
+            GetObjectRequest getObjectRequest = requestBuilder.build();
+
+            GetObjectPresignRequest presign =
+                    GetObjectPresignRequest.builder()
+                            .signatureDuration(Duration.ofMinutes(awsProperties.getS3().getPresignTtlMinutes()))
+                            .getObjectRequest(getObjectRequest)
+                            .build();
+
+            PresignedGetObjectRequest presigned = s3Presigner.presignGetObject(presign);
+            sample.stop(Metrics.timer(meterRegistry, "s3.op.latency", "op", "get_presign_view", "result", "success"));
+            return presigned.url().toString();
+        } catch (RuntimeException e) {
+            sample.stop(Metrics.timer(meterRegistry, "s3.op.latency", "op", "get_presign_view", "result", "failure"));
+            Metrics.increment(meterRegistry, "s3.op.errors", "op", "get_presign_view", "error", e.getClass().getSimpleName());
+            throw e;
+        }
+    }
+
+    @Override
     @Observed(name = "s3.delete")
     public void delete(String storageKey) {
         Timer.Sample sample = Timer.start(meterRegistry);
