@@ -1,33 +1,43 @@
-FROM amazoncorretto:21 AS build
-WORKDIR /workspace/app
+# ============================================
+# Stage 1: Build the Spring Boot application
+# ============================================
+FROM gradle:8.8-jdk21-alpine AS build
 
+WORKDIR /src
+
+# Copy dependency files first (for layer caching)
 COPY gradle/ gradle/
 COPY gradlew .
 COPY build.gradle.kts settings.gradle.kts ./
 RUN chmod +x gradlew
 
+# Download dependencies (cached layer)
 RUN ./gradlew --no-daemon -q dependencies
 
+# Copy source and build
 COPY src ./src
-
 RUN ./gradlew --no-daemon clean bootJar
 
-FROM amazoncorretto:21
+# ============================================
+# Stage 2: Runtime image
+# ============================================
+FROM amazoncorretto:21-alpine
+
 WORKDIR /app
 
 ARG DD_JAVA_AGENT_VERSION=1.52.1
 
-# Install tools with fallback for different Corretto base variants
-RUN set -eux; \
-  base_pkgs="curl ca-certificates shadow-utils util-linux"; \
-  if command -v dnf >/dev/null 2>&1; then pm="dnf"; clean="dnf clean all"; \
-  elif command -v microdnf >/dev/null 2>&1; then pm="microdnf"; clean="microdnf clean all"; \
-  else pm="yum"; clean="yum clean all"; fi; \
-  $pm -y install $base_pkgs coreutils; \
-  $clean; \
-  useradd -r -u 10001 appuser
+# Install runtime dependencies (curl for healthchecks, su-exec for privilege dropping)
+RUN apk add --no-cache curl su-exec && \
+    adduser -D -u 10001 -s /bin/sh appuser
 
-# Fetch dd-java-agent from Maven Central with checksum verification
+# Copy the boot JAR from build stage
+COPY --from=build /src/build/libs/app.jar /app/app.jar
+
+# Copy the secrets loading script with correct permissions
+COPY --chmod=0755 load-secrets.sh /app/load-secrets.sh
+
+# Optional: Fetch Datadog agent (for monitoring)
 RUN set -eux; \
     base="https://repo1.maven.org/maven2/com/datadoghq/dd-java-agent/${DD_JAVA_AGENT_VERSION}"; \
     curl -fsSLo /app/dd-java-agent.jar "$base/dd-java-agent-${DD_JAVA_AGENT_VERSION}.jar"; \
@@ -36,19 +46,12 @@ RUN set -eux; \
     else \
       curl -fsSLo /tmp/dd.jar.sha512 "$base/dd-java-agent-${DD_JAVA_AGENT_VERSION}.jar.sha512"; \
       awk '{print $1"  /app/dd-java-agent.jar"}' /tmp/dd.jar.sha512 | sha512sum -c -; \
-    fi
+    fi || echo "Datadog agent download failed, continuing without it"
 
-# Copy the boot JAR directly (plain JAR is disabled in build.gradle.kts)
-COPY --from=build /workspace/app/build/libs/app.jar /app/app.jar
-
-# Copy the secrets loading script with correct permissions
-COPY --chmod=0755 load-secrets.sh /app/load-secrets.sh
-
-# Set safe HOME directory for libraries that reference it
+# Free-tier friendly memory settings (prevents OOM on t3.micro/small)
+ENV JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=65.0 -XX:+UseSerialGC"
 ENV HOME=/tmp
 
-# Don't inject the Datadog agent by default - let docker-compose control this
-ENV JAVA_TOOL_OPTIONS="${JAVA_TOOL_OPTIONS:-}"
 EXPOSE 8080
 
 # Start as root to read secrets, then drop privileges in entrypoint
