@@ -139,10 +139,10 @@ public class SecurityConfig {
                                                 }))
                 .authenticationProvider(authenticationProvider)
                 .addFilterBefore(requestCorrelationFilter, UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(cacheControlFilter,        UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(jwtAuthFilter,             UsernamePasswordAuthenticationFilter.class)
-                .addFilterAfter(accessLogFilter,            JwtAuthenticationFilter.class)
-                .addFilterAfter(rateLimitFilter,            AccessLogFilter.class);
+                .addFilterBefore(cacheControlFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(accessLogFilter, JwtAuthenticationFilter.class)
+                .addFilterAfter(rateLimitFilter, AccessLogFilter.class);
 
         return http.build();
     }

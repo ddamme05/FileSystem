@@ -14,15 +14,17 @@ import org.springframework.validation.annotation.Validated;
 @ConfigurationProperties(prefix = "aws")
 public class AwsProperties {
 
-  @NotBlank private String region;
-  private S3 s3 = new S3();
+    @NotBlank
+    private String region;
+    private S3 s3 = new S3();
 
-  @Data
-  public static class S3 {
-    @NotBlank private String bucketName;
+    @Data
+    public static class S3 {
+        @NotBlank
+        private String bucketName;
 
-    @Min(1)
-    @Max(7 * 24 * 60) // S3 presign max is 7 days (10080 minutes)
-    private int presignTtlMinutes = 5; // default 5 minutes
-  }
+        @Min(1)
+        @Max(7 * 24 * 60) // S3 presign max is 7 days (10080 minutes)
+        private int presignTtlMinutes = 5; // default 5 minutes
+    }
 }

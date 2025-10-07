@@ -16,63 +16,63 @@ import java.util.concurrent.ConcurrentHashMap;
 @TestConfiguration
 public class TestStorageConfig {
 
-  @Bean
-  @Primary
-  public StorageService testStorageService() {
-    return new InMemoryStorageService();
-  }
-
-  static class InMemoryStorageService implements StorageService {
-    private final Set<String> keys = ConcurrentHashMap.newKeySet();
-
-    @Override
-    public String upload(MultipartFile file) {
-      String key =
-          UUID.randomUUID()
-              + "-"
-              + (file.getOriginalFilename() == null ? "file" : file.getOriginalFilename());
-      keys.add(key);
-      return key;
+    @Bean
+    @Primary
+    public StorageService testStorageService() {
+        return new InMemoryStorageService();
     }
 
-    @Override
-    public String upload(MultipartFile file, String storageKey) {
-      keys.add(storageKey);
-      return storageKey;
-    }
+    static class InMemoryStorageService implements StorageService {
+        private final Set<String> keys = ConcurrentHashMap.newKeySet();
 
-    @Override
-    public String generatePresignedDownloadUrl(String storageKey) {
-      if (!keys.contains(storageKey))
-        throw new StorageOperationException("Unknown storage key: " + storageKey);
-      return "http://localhost/fake/" + storageKey;
-    }
+        @Override
+        public String upload(MultipartFile file) {
+            String key =
+                    UUID.randomUUID()
+                            + "-"
+                            + (file.getOriginalFilename() == null ? "file" : file.getOriginalFilename());
+            keys.add(key);
+            return key;
+        }
 
-    @Override
-    public String generatePresignedDownloadUrl(String key, String originalName) {
-      if (!keys.contains(key)) throw new StorageOperationException("Unknown storage key: " + key);
-      if (originalName == null || originalName.isBlank()) {
-        return "http://localhost/fake/" + key;
-      }
-      String cd = "attachment; filename=\"" + originalName + "\"";
-      String q = URLEncoder.encode(cd, StandardCharsets.UTF_8);
-      return "http://localhost/fake/" + key + "?response-content-disposition=" + q;
-    }
+        @Override
+        public String upload(MultipartFile file, String storageKey) {
+            keys.add(storageKey);
+            return storageKey;
+        }
 
-    @Override
-    public String generatePresignedViewUrl(String key, String originalName) {
-      if (!keys.contains(key)) throw new StorageOperationException("Unknown storage key: " + key);
-      if (originalName == null || originalName.isBlank()) {
-        return "http://localhost/fake/view/" + key;
-      }
-      String cd = "inline; filename=\"" + originalName + "\"";
-      String q = URLEncoder.encode(cd, StandardCharsets.UTF_8);
-      return "http://localhost/fake/view/" + key + "?response-content-disposition=" + q;
-    }
+        @Override
+        public String generatePresignedDownloadUrl(String storageKey) {
+            if (!keys.contains(storageKey))
+                throw new StorageOperationException("Unknown storage key: " + storageKey);
+            return "http://localhost/fake/" + storageKey;
+        }
 
-    @Override
-    public void delete(String storageKey) {
-      keys.remove(storageKey);
+        @Override
+        public String generatePresignedDownloadUrl(String key, String originalName) {
+            if (!keys.contains(key)) throw new StorageOperationException("Unknown storage key: " + key);
+            if (originalName == null || originalName.isBlank()) {
+                return "http://localhost/fake/" + key;
+            }
+            String cd = "attachment; filename=\"" + originalName + "\"";
+            String q = URLEncoder.encode(cd, StandardCharsets.UTF_8);
+            return "http://localhost/fake/" + key + "?response-content-disposition=" + q;
+        }
+
+        @Override
+        public String generatePresignedViewUrl(String key, String originalName) {
+            if (!keys.contains(key)) throw new StorageOperationException("Unknown storage key: " + key);
+            if (originalName == null || originalName.isBlank()) {
+                return "http://localhost/fake/view/" + key;
+            }
+            String cd = "inline; filename=\"" + originalName + "\"";
+            String q = URLEncoder.encode(cd, StandardCharsets.UTF_8);
+            return "http://localhost/fake/view/" + key + "?response-content-disposition=" + q;
+        }
+
+        @Override
+        public void delete(String storageKey) {
+            keys.remove(storageKey);
+        }
     }
-  }
 }

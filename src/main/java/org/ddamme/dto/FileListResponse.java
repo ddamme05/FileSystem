@@ -10,9 +10,9 @@ import java.time.Instant;
 @AllArgsConstructor
 @NoArgsConstructor
 public class FileListResponse {
-  private Long id;
-  private String originalFilename;
-  private long size;
-  private String contentType;
-  private Instant uploadTimestamp;
+    private Long id;
+    private String originalFilename;
+    private long size;
+    private String contentType;
+    private Instant uploadTimestamp;
 }

@@ -11,12 +11,12 @@ import java.util.List;
 @Component
 @ConfigurationProperties(prefix = "security.cors")
 public class CorsProperties {
-  private List<String> allowedOrigins = List.of("http://localhost:3000", "http://127.0.0.1:3000");
-  private List<String> allowedMethods =
-      List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD");
-  private List<String> allowedHeaders =
-      List.of("Authorization", "Content-Type", "X-Request-ID", "Accept");
-  private List<String> exposedHeaders = List.of("X-Request-ID", "Content-Disposition", "Location");
-  private boolean allowCredentials = true;
-  private Duration maxAge = Duration.ofMinutes(30);
+    private List<String> allowedOrigins = List.of("http://localhost:3000", "http://127.0.0.1:3000");
+    private List<String> allowedMethods =
+            List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD");
+    private List<String> allowedHeaders =
+            List.of("Authorization", "Content-Type", "X-Request-ID", "Accept");
+    private List<String> exposedHeaders = List.of("X-Request-ID", "Content-Disposition", "Location");
+    private boolean allowCredentials = true;
+    private Duration maxAge = Duration.ofMinutes(30);
 }

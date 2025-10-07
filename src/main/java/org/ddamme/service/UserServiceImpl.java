@@ -15,29 +15,29 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 public class UserServiceImpl implements UserService {
 
-  private final UserRepository userRepository;
-  private final PasswordEncoder passwordEncoder;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
-  @Override
-  public User registerUser(RegisterRequest request) {
-    if (userRepository.findByUsername(request.getUsername()).isPresent()) {
-      throw new DuplicateResourceException(
-          "User with username " + request.getUsername() + " already exists");
+    @Override
+    public User registerUser(RegisterRequest request) {
+        if (userRepository.findByUsername(request.getUsername()).isPresent()) {
+            throw new DuplicateResourceException(
+                    "User with username " + request.getUsername() + " already exists");
+        }
+
+        if (userRepository.findByEmail(request.getEmail()).isPresent()) {
+            throw new DuplicateResourceException(
+                    "User with email " + request.getEmail() + " already exists");
+        }
+
+        User user =
+                User.builder()
+                        .username(request.getUsername())
+                        .email(request.getEmail())
+                        .password(passwordEncoder.encode(request.getPassword()))
+                        .role(Role.USER)
+                        .build();
+
+        return userRepository.save(user);
     }
-
-    if (userRepository.findByEmail(request.getEmail()).isPresent()) {
-      throw new DuplicateResourceException(
-          "User with email " + request.getEmail() + " already exists");
-    }
-
-    User user =
-        User.builder()
-            .username(request.getUsername())
-            .email(request.getEmail())
-            .password(passwordEncoder.encode(request.getPassword()))
-            .role(Role.USER)
-            .build();
-
-    return userRepository.save(user);
-  }
 }

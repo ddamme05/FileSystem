@@ -106,7 +106,7 @@ public class S3StorageService implements StorageService {
             GetObjectRequest.Builder requestBuilder = GetObjectRequest.builder()
                     .bucket(bucketName)
                     .key(key);
-            
+
             if (originalName != null && !originalName.isBlank()) {
                 // Create RFC 5987 compliant Content-Disposition for presigned URL
                 String ascii = originalName
@@ -115,7 +115,7 @@ public class S3StorageService implements StorageService {
                         .replace("\\", "_");
                 String rfc5987 = FileUtils.rfc5987Encode(originalName);
                 String contentDisposition = "attachment; filename=\"" + ascii + "\"; filename*=UTF-8''" + rfc5987;
-                
+
                 requestBuilder.responseContentDisposition(contentDisposition);
             }
 
@@ -149,7 +149,7 @@ public class S3StorageService implements StorageService {
             GetObjectRequest.Builder requestBuilder = GetObjectRequest.builder()
                     .bucket(bucketName)
                     .key(key);
-            
+
             if (originalName != null && !originalName.isBlank()) {
                 // Create RFC 5987 compliant Content-Disposition for presigned URL
                 String ascii = originalName
@@ -159,7 +159,7 @@ public class S3StorageService implements StorageService {
                 String rfc5987 = FileUtils.rfc5987Encode(originalName);
                 // KEY DIFFERENCE: "inline" instead of "attachment"
                 String contentDisposition = "inline; filename=\"" + ascii + "\"; filename*=UTF-8''" + rfc5987;
-                
+
                 requestBuilder.responseContentDisposition(contentDisposition);
             }
 

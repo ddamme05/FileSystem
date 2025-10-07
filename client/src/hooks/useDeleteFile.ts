@@ -1,15 +1,15 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import {useMutation, useQueryClient} from '@tanstack/react-query';
 
-import { api } from '@/api/client';
+import {api} from '@/api/client';
 
 export function useDeleteFile() {
-  const queryClient = useQueryClient();
+    const queryClient = useQueryClient();
 
-  return useMutation({
-    mutationFn: (fileId: number) => api.delete(`/api/v1/files/${fileId}`),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['files'] });
-    },
-  });
+    return useMutation({
+        mutationFn: (fileId: number) => api.delete(`/api/v1/files/${fileId}`),
+        onSuccess: () => {
+            queryClient.invalidateQueries({queryKey: ['files']});
+        },
+    });
 }
 

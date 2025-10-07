@@ -10,10 +10,10 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class PagedFileResponse {
-  private List<FileListResponse> files;
-  private int currentPage;
-  private int totalPages;
-  private long totalElements;
-  private boolean hasNext;
-  private boolean hasPrevious;
+    private List<FileListResponse> files;
+    private int currentPage;
+    private int totalPages;
+    private long totalElements;
+    private boolean hasNext;
+    private boolean hasPrevious;
 }

@@ -8,14 +8,15 @@ import java.util.Map;
 
 public final class AuditLogger {
 
-  private static final Logger AUDIT = LoggerFactory.getLogger("AUDIT");
+    private static final Logger AUDIT = LoggerFactory.getLogger("AUDIT");
 
-  private AuditLogger() {}
+    private AuditLogger() {
+    }
 
-  public static void log(String action, Map<String, Object> attributes) {
-    AUDIT.info(
-        "audit",
-        StructuredArguments.keyValue("action", action),
-        StructuredArguments.entries(attributes));
-  }
+    public static void log(String action, Map<String, Object> attributes) {
+        AUDIT.info(
+                "audit",
+                StructuredArguments.keyValue("action", action),
+                StructuredArguments.entries(attributes));
+    }
 }

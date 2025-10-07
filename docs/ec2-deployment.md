@@ -1,10 +1,12 @@
 # EC2 Deployment with AWS SSM Parameter Store
 
-This document explains how to deploy your application to EC2 using the same secret management pattern as your local development environment.
+This document explains how to deploy your application to EC2 using the same secret management pattern as your local
+development environment.
 
 ## Overview
 
-The deployment uses **AWS SSM Parameter Store (Standard tier - FREE)** to store secrets securely, then fetches them at boot time to create the same `./.secrets/` directory structure that your docker-compose.yml expects.
+The deployment uses **AWS SSM Parameter Store (Standard tier - FREE)** to store secrets securely, then fetches them at
+boot time to create the same `./.secrets/` directory structure that your docker-compose.yml expects.
 
 ## 1. Store Secrets in AWS SSM Parameter Store
 
@@ -86,6 +88,7 @@ runcmd:
 ## 4. Security Group Configuration
 
 Configure your EC2 security group to allow:
+
 - **Port 22** (SSH) from your IP
 - **Port 8080** (HTTP) from anywhere or your load balancer
 - **Port 443** (HTTPS) if using SSL termination
@@ -93,17 +96,20 @@ Configure your EC2 security group to allow:
 ## 5. Benefits of This Approach
 
 ### ✅ **FREE**
+
 - SSM Standard parameters: FREE
 - AWS-managed KMS encryption: FREE
 - No additional infrastructure costs
 
-### ✅ **SECURE** 
+### ✅ **SECURE**
+
 - Secrets encrypted at rest in SSM
 - Secrets only exist in memory/container filesystems
 - No secrets in environment variables or docker inspect
 - IAM-controlled access
 
 ### ✅ **NO DIFFS**
+
 - Same `docker-compose.yml` file works locally and on EC2
 - Same `.secrets/` directory structure everywhere
 - No environment-specific configuration

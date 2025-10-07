@@ -1,27 +1,27 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    
+<head>
+    <meta charset="UTF-8"/>
+    <link href="/vite.svg" rel="icon" type="image/svg+xml"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+
     <!-- Security Headers (Development fallback - production uses Nginx) -->
-    <meta http-equiv="X-Content-Type-Options" content="nosniff" />
-    <meta http-equiv="X-Frame-Options" content="DENY" />
-    <meta name="referrer" content="no-referrer" />
-    
+    <meta content="nosniff" http-equiv="X-Content-Type-Options"/>
+    <meta content="DENY" http-equiv="X-Frame-Options"/>
+    <meta content="no-referrer" name="referrer"/>
+
     <!-- Content Security Policy (Development - production CSP is stricter) -->
-    <meta 
-      http-equiv="Content-Security-Policy" 
-      content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' http://localhost:* ws://localhost:* https:; frame-src 'self' https:; media-src 'self' https:;"
+    <meta
+            content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' http://localhost:* ws://localhost:* https:; frame-src 'self' https:; media-src 'self' https:;"
+            http-equiv="Content-Security-Policy"
     />
-    
+
     <title>File Storage</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+</head>
+<body>
+<div id="root"></div>
+<script src="/src/main.tsx" type="module"></script>
+</body>
 </html>
 
 

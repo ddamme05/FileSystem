@@ -9,21 +9,21 @@ import java.time.Instant;
 @Setter
 public class ErrorResponse {
 
-  private Instant timestamp;
+    private Instant timestamp;
 
-  private int status;
+    private int status;
 
-  private String error;
+    private String error;
 
-  private String message;
+    private String message;
 
-  private String path;
+    private String path;
 
-  public ErrorResponse(Instant timestamp, int status, String error, String message, String path) {
-    this.timestamp = timestamp;
-    this.status = status;
-    this.error = error;
-    this.message = message;
-    this.path = path;
-  }
+    public ErrorResponse(Instant timestamp, int status, String error, String message, String path) {
+        this.timestamp = timestamp;
+        this.status = status;
+        this.error = error;
+        this.message = message;
+        this.path = path;
+    }
 }

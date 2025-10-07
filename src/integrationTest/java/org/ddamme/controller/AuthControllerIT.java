@@ -22,72 +22,74 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class AuthControllerIT extends BaseIntegrationTest {
 
-  @Autowired private MockMvc mockMvc;
+    @Autowired
+    private MockMvc mockMvc;
 
-  @Autowired private ObjectMapper objectMapper;
+    @Autowired
+    private ObjectMapper objectMapper;
 
-  @Test
-  @DisplayName("register returns 400 for invalid payload in full context")
-  void register_invalidPayload_returnsBadRequest() throws Exception {
-    RegisterRequest payload =
-        RegisterRequest.builder().username("").email("bad").password("short").build();
+    @Test
+    @DisplayName("register returns 400 for invalid payload in full context")
+    void register_invalidPayload_returnsBadRequest() throws Exception {
+        RegisterRequest payload =
+                RegisterRequest.builder().username("").email("bad").password("short").build();
 
-    mockMvc
-        .perform(
-            post("/api/v1/auth/register")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(payload)))
-        .andExpect(status().isBadRequest());
-  }
+        mockMvc
+                .perform(
+                        post("/api/v1/auth/register")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(payload)))
+                .andExpect(status().isBadRequest());
+    }
 
-  @Test
-  @DisplayName("POST /register successfully creates a new user")
-  void register_success() throws Exception {
-    String uniqueUser = "ituser-register-" + System.currentTimeMillis();
-    RegisterRequest register =
-        RegisterRequest.builder()
-            .username(uniqueUser)
-            .email(uniqueUser + "@example.com")
-            .password("a-valid-password-123")
-            .build();
+    @Test
+    @DisplayName("POST /register successfully creates a new user")
+    void register_success() throws Exception {
+        String uniqueUser = "ituser-register-" + System.currentTimeMillis();
+        RegisterRequest register =
+                RegisterRequest.builder()
+                        .username(uniqueUser)
+                        .email(uniqueUser + "@example.com")
+                        .password("a-valid-password-123")
+                        .build();
 
-    mockMvc
-        .perform(
-            post("/api/v1/auth/register")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(register)))
-        .andExpect(status().isOk())
-        .andExpect(jsonPath("$.token").isString())
-        .andExpect(jsonPath("$.username").value(uniqueUser));
-  }
+        mockMvc
+                .perform(
+                        post("/api/v1/auth/register")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(register)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.token").isString())
+                .andExpect(jsonPath("$.username").value(uniqueUser));
+    }
 
-  @Test
-  @DisplayName("login succeeds and returns token")
-  void login_success_returnsToken() throws Exception {
-    String uniqueUser = "ituser-login-" + System.currentTimeMillis();
-    String email = uniqueUser + "@example.com";
+    @Test
+    @DisplayName("login succeeds and returns token")
+    void login_success_returnsToken() throws Exception {
+        String uniqueUser = "ituser-login-" + System.currentTimeMillis();
+        String email = uniqueUser + "@example.com";
 
-    // Register user first
-    RegisterRequest register =
-        RegisterRequest.builder().username(uniqueUser).email(email).password("secret123").build();
-    mockMvc
-        .perform(
-            post("/api/v1/auth/register")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(register)))
-        .andExpect(status().isOk());
+        // Register user first
+        RegisterRequest register =
+                RegisterRequest.builder().username(uniqueUser).email(email).password("secret123").build();
+        mockMvc
+                .perform(
+                        post("/api/v1/auth/register")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(register)))
+                .andExpect(status().isOk());
 
-    // Then login
-    LoginRequest login = LoginRequest.builder().username(uniqueUser).password("secret123").build();
+        // Then login
+        LoginRequest login = LoginRequest.builder().username(uniqueUser).password("secret123").build();
 
-    mockMvc
-        .perform(
-            post("/api/v1/auth/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(login)))
-        .andExpect(status().isOk())
-        .andExpect(jsonPath("$.token").isString())
-        .andExpect(jsonPath("$.username").value(uniqueUser))
-        .andExpect(jsonPath("$.role").isString());
-  }
+        mockMvc
+                .perform(
+                        post("/api/v1/auth/login")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(login)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.token").isString())
+                .andExpect(jsonPath("$.username").value(uniqueUser))
+                .andExpect(jsonPath("$.role").isString());
+    }
 }
