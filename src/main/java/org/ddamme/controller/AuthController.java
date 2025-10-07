@@ -25,44 +25,44 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class AuthController {
 
-  private final UserService userService;
-  private final JwtService jwtService;
-  private final AuthenticationManager authenticationManager;
-  private final MeterRegistry meterRegistry;
+    private final UserService userService;
+    private final JwtService jwtService;
+    private final AuthenticationManager authenticationManager;
+    private final MeterRegistry meterRegistry;
 
-  @PostMapping("/register")
-  @Operation(summary = "Register a new user and receive a JWT")
-  public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
-    User user = userService.registerUser(request);
-    String token = jwtService.generateToken(user);
-    AuthResponse response =
-        AuthResponse.builder()
-            .token(token)
-            .username(user.getUsername())
-            .role(user.getRole().name())
-            .build();
+    @PostMapping("/register")
+    @Operation(summary = "Register a new user and receive a JWT")
+    public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
+        User user = userService.registerUser(request);
+        String token = jwtService.generateToken(user);
+        AuthResponse response =
+                AuthResponse.builder()
+                        .token(token)
+                        .username(user.getUsername())
+                        .role(user.getRole().name())
+                        .build();
 
-    return ResponseEntity.ok(response);
-  }
+        return ResponseEntity.ok(response);
+    }
 
-  @PostMapping("/login")
-  @Operation(summary = "Login with username and password to receive a JWT")
-  public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
-    Authentication authentication =
-        authenticationManager.authenticate(
-            new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword()));
-    User user = (User) authentication.getPrincipal();
-    String token = jwtService.generateToken(user);
-    
-    // Track successful login
-    Metrics.increment(meterRegistry, "auth.login.count", "result", "success");
-    
-    AuthResponse response =
-        AuthResponse.builder()
-            .token(token)
-            .username(user.getUsername())
-            .role(user.getRole().name())
-            .build();
-    return ResponseEntity.ok(response);
-  }
+    @PostMapping("/login")
+    @Operation(summary = "Login with username and password to receive a JWT")
+    public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
+        Authentication authentication =
+                authenticationManager.authenticate(
+                        new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword()));
+        User user = (User) authentication.getPrincipal();
+        String token = jwtService.generateToken(user);
+
+        // Track successful login
+        Metrics.increment(meterRegistry, "auth.login.count", "result", "success");
+
+        AuthResponse response =
+                AuthResponse.builder()
+                        .token(token)
+                        .username(user.getUsername())
+                        .role(user.getRole().name())
+                        .build();
+        return ResponseEntity.ok(response);
+    }
 }

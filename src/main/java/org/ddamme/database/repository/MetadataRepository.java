@@ -15,13 +15,13 @@ import java.util.Optional;
 @Repository
 @Observed(name = "repository.metadata")
 public interface MetadataRepository extends JpaRepository<FileMetadata, Long> {
-  List<FileMetadata> findByUserOrderByUploadTimestampDesc(User user);
+    List<FileMetadata> findByUserOrderByUploadTimestampDesc(User user);
 
-  @Query("SELECT file FROM FileMetadata file WHERE file.user.id = :userId ORDER BY file.uploadTimestamp DESC")
-  Page<FileMetadata> findByUserIdOrderByUploadTimestampDesc(Long userId, Pageable pageable);
+    @Query("SELECT file FROM FileMetadata file WHERE file.user.id = :userId ORDER BY file.uploadTimestamp DESC")
+    Page<FileMetadata> findByUserIdOrderByUploadTimestampDesc(Long userId, Pageable pageable);
 
-  Optional<FileMetadata> findByIdAndUserId(Long id, Long userId);
+    Optional<FileMetadata> findByIdAndUserId(Long id, Long userId);
 
-  @Query("select coalesce(sum(f.size), 0) from FileMetadata f")
-  long sumSizes();
+    @Query("select coalesce(sum(f.size), 0) from FileMetadata f")
+    long sumSizes();
 }

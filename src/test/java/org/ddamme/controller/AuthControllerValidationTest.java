@@ -18,57 +18,59 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(
-    controllers = AuthController.class,
-    properties = {
-      "springdoc.api-docs.enabled=false",
-      "springdoc.swagger-ui.enabled=false",
-      "security.ratelimit.per-minute.upload=10",
-      "security.ratelimit.per-minute.download=120"
-    },
-    excludeFilters = {
-      @ComponentScan.Filter(
-          type = FilterType.ASSIGNABLE_TYPE,
-          classes = {org.ddamme.security.filter.RateLimitFilter.class})
-    })
+        controllers = AuthController.class,
+        properties = {
+                "springdoc.api-docs.enabled=false",
+                "springdoc.swagger-ui.enabled=false",
+                "security.ratelimit.per-minute.upload=10",
+                "security.ratelimit.per-minute.download=120"
+        },
+        excludeFilters = {
+                @ComponentScan.Filter(
+                        type = FilterType.ASSIGNABLE_TYPE,
+                        classes = {org.ddamme.security.filter.RateLimitFilter.class})
+        })
 @AutoConfigureMockMvc(addFilters = false)
 @Import(TestMocksConfig.class)
 class AuthControllerValidationTest {
 
-  @Autowired private MockMvc mockMvc;
+    @Autowired
+    private MockMvc mockMvc;
 
-  @Autowired private ObjectMapper objectMapper;
+    @Autowired
+    private ObjectMapper objectMapper;
 
-  @Test
-  @DisplayName("register returns 400 when username is blank")
-  void register_validation_blankUsername() throws Exception {
-    RegisterRequest payload =
-        RegisterRequest.builder()
-            .username("")
-            .email("bad@example.com")
-            .password("secret123")
-            .build();
-    mockMvc
-        .perform(
-            post("/api/v1/auth/register")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(payload)))
-        .andExpect(status().isBadRequest());
-  }
+    @Test
+    @DisplayName("register returns 400 when username is blank")
+    void register_validation_blankUsername() throws Exception {
+        RegisterRequest payload =
+                RegisterRequest.builder()
+                        .username("")
+                        .email("bad@example.com")
+                        .password("secret123")
+                        .build();
+        mockMvc
+                .perform(
+                        post("/api/v1/auth/register")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(payload)))
+                .andExpect(status().isBadRequest());
+    }
 
-  @Test
-  @DisplayName("register returns 400 when email is invalid")
-  void register_validation_invalidEmail() throws Exception {
-    RegisterRequest payload =
-        RegisterRequest.builder()
-            .username("alice")
-            .email("not-an-email")
-            .password("secret123")
-            .build();
-    mockMvc
-        .perform(
-            post("/api/v1/auth/register")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(payload)))
-        .andExpect(status().isBadRequest());
-  }
+    @Test
+    @DisplayName("register returns 400 when email is invalid")
+    void register_validation_invalidEmail() throws Exception {
+        RegisterRequest payload =
+                RegisterRequest.builder()
+                        .username("alice")
+                        .email("not-an-email")
+                        .password("secret123")
+                        .build();
+        mockMvc
+                .perform(
+                        post("/api/v1/auth/register")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(payload)))
+                .andExpect(status().isBadRequest());
+    }
 }

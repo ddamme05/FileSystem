@@ -18,26 +18,26 @@ import java.util.UUID;
 @Order(Ordered.HIGHEST_PRECEDENCE)
 public class RequestCorrelationFilter extends OncePerRequestFilter {
 
-  public static final String HEADER_REQUEST_ID = "X-Request-ID";
-  public static final String MDC_REQUEST_ID = "request_id";
+    public static final String HEADER_REQUEST_ID = "X-Request-ID";
+    public static final String MDC_REQUEST_ID = "request_id";
 
-  @Override
-  protected void doFilterInternal(
-      HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
-      throws ServletException, IOException {
+    @Override
+    protected void doFilterInternal(
+            HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+            throws ServletException, IOException {
 
-    String incomingRequestId = request.getHeader(HEADER_REQUEST_ID);
-    String requestId =
-        Optional.ofNullable(incomingRequestId)
-            .filter(s -> !s.isBlank())
-            .orElse(UUID.randomUUID().toString());
+        String incomingRequestId = request.getHeader(HEADER_REQUEST_ID);
+        String requestId =
+                Optional.ofNullable(incomingRequestId)
+                        .filter(s -> !s.isBlank())
+                        .orElse(UUID.randomUUID().toString());
 
-    MDC.put(MDC_REQUEST_ID, requestId);
-    response.setHeader(HEADER_REQUEST_ID, requestId);
-    try {
-      filterChain.doFilter(request, response);
-    } finally {
-      MDC.remove(MDC_REQUEST_ID);
+        MDC.put(MDC_REQUEST_ID, requestId);
+        response.setHeader(HEADER_REQUEST_ID, requestId);
+        try {
+            filterChain.doFilter(request, response);
+        } finally {
+            MDC.remove(MDC_REQUEST_ID);
+        }
     }
-  }
 }

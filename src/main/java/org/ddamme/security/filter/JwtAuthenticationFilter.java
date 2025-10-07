@@ -31,64 +31,64 @@ import java.io.IOException;
 @Slf4j
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-  private final JwtService jwtService;
-  private final UserDetailsService userDetailsService;
-  private final MeterRegistry meterRegistry;
+    private final JwtService jwtService;
+    private final UserDetailsService userDetailsService;
+    private final MeterRegistry meterRegistry;
 
-  @Override
-  protected void doFilterInternal(
-      @NonNull HttpServletRequest request,
-      @NonNull HttpServletResponse response,
-      @NonNull FilterChain filterChain)
-      throws ServletException, IOException {
-    final String authHeader = request.getHeader("Authorization");
+    @Override
+    protected void doFilterInternal(
+            @NonNull HttpServletRequest request,
+            @NonNull HttpServletResponse response,
+            @NonNull FilterChain filterChain)
+            throws ServletException, IOException {
+        final String authHeader = request.getHeader("Authorization");
 
-    if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-      filterChain.doFilter(request, response);
-      return;
-    }
-
-    try {
-      final String jwtToken = authHeader.substring(7);
-      final String username = jwtService.extractUsername(jwtToken);
-
-      if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-        UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
-
-        if (jwtService.isTokenValid(jwtToken, userDetails)) {
-          UsernamePasswordAuthenticationToken authToken =
-              new UsernamePasswordAuthenticationToken(
-                  userDetails, null, userDetails.getAuthorities());
-          authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-          SecurityContextHolder.getContext().setAuthentication(authToken);
-          MDC.put("user", userDetails.getUsername());
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            filterChain.doFilter(request, response);
+            return;
         }
-      }
-    } catch (JwtException e) {
-      // Categorize JWT failure reason for better observability
-      String reason = determineJwtFailureReason(e);
-      Metrics.increment(meterRegistry, "auth.jwt.invalid", "reason", reason);
-      log.debug("Invalid JWT token: {}", e.getMessage());
+
+        try {
+            final String jwtToken = authHeader.substring(7);
+            final String username = jwtService.extractUsername(jwtToken);
+
+            if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
+
+                if (jwtService.isTokenValid(jwtToken, userDetails)) {
+                    UsernamePasswordAuthenticationToken authToken =
+                            new UsernamePasswordAuthenticationToken(
+                                    userDetails, null, userDetails.getAuthorities());
+                    authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    SecurityContextHolder.getContext().setAuthentication(authToken);
+                    MDC.put("user", userDetails.getUsername());
+                }
+            }
+        } catch (JwtException e) {
+            // Categorize JWT failure reason for better observability
+            String reason = determineJwtFailureReason(e);
+            Metrics.increment(meterRegistry, "auth.jwt.invalid", "reason", reason);
+            log.debug("Invalid JWT token: {}", e.getMessage());
+        }
+
+        try {
+            filterChain.doFilter(request, response);
+        } finally {
+            MDC.remove("user");
+        }
     }
 
-    try {
-      filterChain.doFilter(request, response);
-    } finally {
-      MDC.remove("user");
+    /**
+     * Determines the reason for JWT validation failure for better observability.
+     * Uses instanceof checks for stable, reliable categorization.
+     */
+    private String determineJwtFailureReason(JwtException e) {
+        if (e instanceof ExpiredJwtException) return "expired";
+        if (e instanceof SignatureException) return "signature";
+        if (e instanceof MalformedJwtException) return "malformed";
+        if (e instanceof UnsupportedJwtException) return "unsupported";
+        // Check message for issuer-related failures (less common, no specific exception type)
+        if (e.getMessage() != null && e.getMessage().toLowerCase().contains("issuer")) return "issuer";
+        return "other";
     }
-  }
-
-  /**
-   * Determines the reason for JWT validation failure for better observability.
-   * Uses instanceof checks for stable, reliable categorization.
-   */
-  private String determineJwtFailureReason(JwtException e) {
-    if (e instanceof ExpiredJwtException) return "expired";
-    if (e instanceof SignatureException) return "signature";
-    if (e instanceof MalformedJwtException) return "malformed";
-    if (e instanceof UnsupportedJwtException) return "unsupported";
-    // Check message for issuer-related failures (less common, no specific exception type)
-    if (e.getMessage() != null && e.getMessage().toLowerCase().contains("issuer")) return "issuer";
-    return "other";
-  }
 }

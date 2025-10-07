@@ -15,17 +15,20 @@ The **entire application** runs in Docker containers. Just one command:
 ```
 
 That's it! The script will:
+
 - Create secure secrets (database password, JWT secret)
 - Build all Docker images
 - Start PostgreSQL, backend, and frontend
 - Set up monitoring (optional Datadog)
 
 **Access the application:**
+
 - Frontend: **http://localhost:3000**
 - Backend API: http://localhost:8080/api
 - Database: localhost:5433
 
 **Test credentials:**
+
 - Username: `demouser`
 - Password: `Demo123!`
 
@@ -56,20 +59,20 @@ That's it! The script will:
 ### What's Running
 
 - **Frontend** (React 19 + Nginx):
-  - Modern SPA with drag-and-drop uploads
-  - File preview (images, PDFs, text, video, audio)
-  - Search, filter, sort
-  - Strict CSP security headers
-  
+    - Modern SPA with drag-and-drop uploads
+    - File preview (images, PDFs, text, video, audio)
+    - Search, filter, sort
+    - Strict CSP security headers
+
 - **Backend** (Spring Boot + Java 21):
-  - RESTful API with JWT authentication
-  - S3 file storage with presigned URLs
-  - User isolation & rate limiting
-  - Datadog APM instrumentation
-  
+    - RESTful API with JWT authentication
+    - S3 file storage with presigned URLs
+    - User isolation & rate limiting
+    - Datadog APM instrumentation
+
 - **Database** (PostgreSQL 17):
-  - Persistent storage for metadata
-  - Health checks & backups ready
+    - Persistent storage for metadata
+    - Health checks & backups ready
 
 ---
 
@@ -171,6 +174,7 @@ cd client && npm test
 ### Step 2: Production Server
 
 Follow `SECURITY_DEPLOYMENT_GUIDE.md` for:
+
 - Setting up a production server
 - Configuring Nginx reverse proxy
 - SSL/TLS with Let's Encrypt
@@ -240,6 +244,7 @@ docker compose exec postgres-db psql -U user -d file_system_db
 ## 🎯 Tech Stack
 
 ### Frontend
+
 - **React 19** - Form Actions, `use()`, `useOptimistic()`
 - **TypeScript** - Strict mode with extra safety flags
 - **Vite** - Fast builds, HMR
@@ -248,6 +253,7 @@ docker compose exec postgres-db psql -U user -d file_system_db
 - **Playwright** - E2E testing
 
 ### Backend
+
 - **Spring Boot 3.4** - REST API framework
 - **Java 21** - Virtual threads, pattern matching
 - **PostgreSQL 17** - Primary database
@@ -255,6 +261,7 @@ docker compose exec postgres-db psql -U user -d file_system_db
 - **Datadog** - APM & observability
 
 ### Infrastructure
+
 - **Docker** - Containerization
 - **Nginx** - Reverse proxy & static file serving
 - **Let's Encrypt** - Free SSL/TLS certificates

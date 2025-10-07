@@ -86,8 +86,16 @@ tasks.withType<Test> {
     addTestListener(object : org.gradle.api.tasks.testing.TestListener {
         override fun beforeSuite(suite: org.gradle.api.tasks.testing.TestDescriptor) {}
         override fun beforeTest(testDescriptor: org.gradle.api.tasks.testing.TestDescriptor) {}
-        override fun afterTest(testDescriptor: org.gradle.api.tasks.testing.TestDescriptor, result: org.gradle.api.tasks.testing.TestResult) {}
-        override fun afterSuite(suite: org.gradle.api.tasks.testing.TestDescriptor, result: org.gradle.api.tasks.testing.TestResult) {
+        override fun afterTest(
+            testDescriptor: org.gradle.api.tasks.testing.TestDescriptor,
+            result: org.gradle.api.tasks.testing.TestResult
+        ) {
+        }
+
+        override fun afterSuite(
+            suite: org.gradle.api.tasks.testing.TestDescriptor,
+            result: org.gradle.api.tasks.testing.TestResult
+        ) {
             if (suite.parent == null) {
                 println("Results: ${result.resultType} (${result.testCount} tests, ${result.successfulTestCount} successes, ${result.failedTestCount} failures, ${result.skippedTestCount} skipped)")
             }

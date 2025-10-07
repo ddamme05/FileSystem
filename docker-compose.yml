@@ -15,16 +15,16 @@ services:
   postgres-db:
     image: postgres:17-alpine
     restart: unless-stopped
-    ports: ["5433:5432"]
+    ports: [ "5433:5432" ]
     environment:
       POSTGRES_USER: user
       POSTGRES_PASSWORD_FILE: /run/secrets/db_password
       POSTGRES_DB: file_system_db
-    secrets: [db_password]
+    secrets: [ db_password ]
     volumes:
       - postgres-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U user -d file_system_db -q"]
+      test: [ "CMD-SHELL", "pg_isready -U user -d file_system_db -q" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -42,12 +42,12 @@ services:
     depends_on:
       postgres-db:
         condition: service_healthy
-    ports: ["8080:8080"]
+    ports: [ "8080:8080" ]
     read_only: true
-    tmpfs: ["/tmp","/var/tmp"]
-    cap_drop: [ALL]
-    cap_add: [SETUID, SETGID]
-    security_opt: ["no-new-privileges:true"]
+    tmpfs: [ "/tmp","/var/tmp" ]
+    cap_drop: [ ALL ]
+    cap_add: [ SETUID, SETGID ]
+    security_opt: [ "no-new-privileges:true" ]
     init: true
     environment:
       # Datadog
@@ -85,9 +85,9 @@ services:
       AWS_EC2_METADATA_DISABLED: "true"  # Remove this on EC2 to use IAM role
     volumes:
       - ${HOME}/.aws:/aws:ro  # Remove this on EC2 to use IAM role
-    secrets: [db_password, jwt_secret]
+    secrets: [ db_password, jwt_secret ]
     healthcheck:
-      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/actuator/health | grep -q '\"status\":\"UP\"' || exit 1"]
+      test: [ "CMD-SHELL", "curl -fsS http://localhost:8080/actuator/health | grep -q '\"status\":\"UP\"' || exit 1" ]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -109,16 +109,16 @@ services:
     depends_on:
       app:
         condition: service_healthy
-    ports: 
+    ports:
       - "3000:80"  # Dev: host:3000, Prod: change to "80:80" for direct HTTP access
     # Note: Not using user: "101:101" because tmpfs mounts need root to set permissions
     # Nginx drops privileges internally to nginx user for worker processes
-    cap_drop: [ALL]
-    cap_add: [NET_BIND_SERVICE, CHOWN, SETUID, SETGID]  # Needed for nginx to drop privileges
-    security_opt: ["no-new-privileges:true"]
+    cap_drop: [ ALL ]
+    cap_add: [ NET_BIND_SERVICE, CHOWN, SETUID, SETGID ]  # Needed for nginx to drop privileges
+    security_opt: [ "no-new-privileges:true" ]
     init: true
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      test: [ "CMD", "curl", "-f", "http://localhost/health" ]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -134,7 +134,7 @@ services:
   datadog:
     image: gcr.io/datadoghq/agent:7
     restart: unless-stopped
-    entrypoint: ["/bin/sh","-lc"]
+    entrypoint: [ "/bin/sh","-lc" ]
     command:
       - >
         export DD_API_KEY="$(tr -d '\r\n' < /run/secrets/dd_api_key)";
@@ -153,7 +153,7 @@ services:
       DD_OTLP_CONFIG_RECEIVER_PROTOCOLS_HTTP_ENDPOINT: "0.0.0.0:4318"
       DD_OTLP_CONFIG_METRICS_ENABLED: "true"
       DD_OTLP_CONFIG_TRACES_ENABLED: "true"
-    secrets: [dd_api_key, dd_site]
+    secrets: [ dd_api_key, dd_site ]
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - /proc/:/host/proc/:ro
@@ -164,7 +164,7 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
-    ports: ["8126:8126","4317:4317","4318:4318"]
+    ports: [ "8126:8126","4317:4317","4318:4318" ]
 
 volumes:
   postgres-data:
