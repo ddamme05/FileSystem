@@ -104,8 +104,8 @@ export function FilesPage() {
   async function handleDownload(fileId: number) {
     try {
       await downloadFile(fileId);
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to download file');
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : 'Failed to download file');
     }
   }
 

@@ -19,13 +19,13 @@ jobs:
       postgres:
         image: postgres:17-alpine
         env:
-          POSTGRES_DB: filedb
-          POSTGRES_USER: fileuser
+          POSTGRES_DB: file_system_db
+          POSTGRES_USER: user
           POSTGRES_PASSWORD: testpassword
         ports:
           - 5432:5432
         options: >-
-          --health-cmd="pg_isready -U fileuser -d filedb"
+          --health-cmd="pg_isready -U user -d file_system_db"
           --health-interval=10s
           --health-timeout=5s
           --health-retries=5
@@ -70,8 +70,8 @@ jobs:
           AWS_EC2_METADATA_DISABLED: "true"
           
           # Database config
-          SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/filedb
-          SPRING_DATASOURCE_USERNAME: fileuser
+          SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/file_system_db
+          SPRING_DATASOURCE_USERNAME: user
           SPRING_DATASOURCE_PASSWORD: testpassword
           
           # Dummy AWS creds for SDK (if tests require AWS SDK init)

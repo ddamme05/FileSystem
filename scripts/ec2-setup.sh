@@ -62,8 +62,8 @@ if [ ! -f .env ]; then
     
     cat > .env << EOF
 # Database
-POSTGRES_DB=filedb
-POSTGRES_USER=fileuser
+POSTGRES_DB=file_system_db
+POSTGRES_USER=user
 POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
 
 # JWT
@@ -233,4 +233,3 @@ echo "7. After HTTP works, set up SSL:"
 echo "   See docs/SSL_SETUP_GUIDE.md"
 echo ""
 echo "=================================="
-

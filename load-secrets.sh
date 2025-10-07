@@ -42,5 +42,5 @@ elif command -v runuser >/dev/null 2>&1; then
   exec runuser -u appuser -- java -jar /app/app.jar "$@"
 else
   # Fallback to su (available everywhere)
-  exec su -s /bin/sh appuser -c 'exec java -jar /app/app.jar "$@"' -- "$@"
+  exec su -s /bin/sh -c 'exec java -jar /app/app.jar "$@"' appuser -- "$@"
 fi
