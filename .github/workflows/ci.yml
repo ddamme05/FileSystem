@@ -9,6 +9,7 @@ on:
 permissions:
   contents: read
   pull-requests: write  # For test summary comments
+  checks: write  # For publishing test results as check runs
 
 jobs:
   build-and-test:
