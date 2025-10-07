@@ -28,6 +28,12 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 10s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   app:
     build: .
@@ -65,16 +71,20 @@ services:
       SPRING_DATASOURCE_USERNAME: user
       SPRING_PROFILES_ACTIVE: dev
 
-      # AWS
+      # AWS Config
+      # For local dev: uses ~/.aws credentials (mounted below)
+      # For EC2: Remove AWS_PROFILE, AWS_EC2_METADATA_DISABLED, and volumes; use IAM role instead
+      # If using EC2 IAM role and containers can't assume it, set IMDS hop limit: 
+      #   aws ec2 modify-instance-metadata-options --instance-id <ID> --http-put-response-hop-limit 2
       AWS_REGION: us-east-1
       AWS_S3_BUCKET: ${AWS_S3_BUCKET:-filesystem-s3}
       AWS_PROFILE: file-system-app-role
       AWS_SHARED_CREDENTIALS_FILE: /aws/credentials
       AWS_CONFIG_FILE: /aws/config
       AWS_SDK_LOAD_CONFIG: "true"
-      AWS_EC2_METADATA_DISABLED: "true"
+      AWS_EC2_METADATA_DISABLED: "true"  # Remove this on EC2 to use IAM role
     volumes:
-      - ${HOME}/.aws:/aws:ro
+      - ${HOME}/.aws:/aws:ro  # Remove this on EC2 to use IAM role
     secrets: [db_password, jwt_secret]
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS http://localhost:8080/actuator/health | grep -q '\"status\":\"UP\"' || exit 1"]
@@ -82,6 +92,11 @@ services:
       timeout: 10s
       retries: 5
       start_period: 60s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     labels:
       com.datadoghq.ad.logs: '[{"source":"java","service":"file-system-app"}]'
 
@@ -94,7 +109,8 @@ services:
     depends_on:
       app:
         condition: service_healthy
-    ports: ["3000:80"]
+    ports: 
+      - "3000:80"  # Dev: host:3000, Prod: change to "80:80" for direct HTTP access
     # Note: Not using user: "101:101" because tmpfs mounts need root to set permissions
     # Nginx drops privileges internally to nginx user for worker processes
     cap_drop: [ALL]
@@ -107,6 +123,11 @@ services:
       timeout: 5s
       retries: 3
       start_period: 10s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     labels:
       com.datadoghq.ad.logs: '[{"source":"nginx","service":"file-system-frontend"}]'
 
@@ -138,6 +159,11 @@ services:
       - /proc/:/host/proc/:ro
       - /sys/fs/cgroup:/host/sys/fs/cgroup:ro
       - /var/lib/docker/containers:/var/lib/docker/containers:ro
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     ports: ["8126:8126","4317:4317","4318:4318"]
 
 volumes:

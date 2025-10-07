@@ -31,16 +31,16 @@ export SECURITY_JWT_SECRET
 # Note: AWS credentials now come from EC2 instance role via IMDSv2
 # AWS_REGION and AWS_S3_BUCKET are set as environment variables in docker-compose.yml
 
-# Drop privileges and start Java app with safer fallbacks
-if command -v setpriv >/dev/null 2>&1; then
-  # Try with --init-groups first, fall back to --clear-groups if unsupported
-  if setpriv --reuid 10001 --regid 10001 --init-groups true 2>/dev/null; then
-    exec setpriv --reuid 10001 --regid 10001 --init-groups java -jar /app/app.jar "$@"
-  else
-    exec setpriv --reuid 10001 --regid 10001 --clear-groups java -jar /app/app.jar "$@"
-  fi
+# Drop privileges and start Java app
+# Alpine uses BusyBox which doesn't support setpriv --reuid
+# Use su-exec (lightweight, designed for containers) or su as fallback
+if command -v su-exec >/dev/null 2>&1; then
+  # su-exec is the cleanest option for Alpine/Docker
+  exec su-exec appuser java -jar /app/app.jar "$@"
 elif command -v runuser >/dev/null 2>&1; then
+  # Debian/Ubuntu have runuser
   exec runuser -u appuser -- java -jar /app/app.jar "$@"
 else
-  exec su -s /bin/sh -c 'exec java -jar /app/app.jar "$@"' appuser -- "$@"
+  # Fallback to su (available everywhere)
+  exec su -s /bin/sh appuser -c 'exec java -jar /app/app.jar "$@"' -- "$@"
 fi
