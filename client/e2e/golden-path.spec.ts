@@ -32,7 +32,7 @@ test.describe('Golden Path: Complete File Lifecycle', () => {
 
   // No cleanup needed - tests delete their own files
 
-  test('should complete full file lifecycle: login → upload → preview → download → delete', async ({ page, context }) => {
+  test('should complete full file lifecycle: login → upload → preview → download → delete', async ({ page }) => {
     // ===================================
     // STEP 1: Login
     // ===================================
@@ -72,7 +72,6 @@ test.describe('Golden Path: Complete File Lifecycle', () => {
     // ===================================
     const testFileName = 'playwright-test.txt';
     const testFileContent = `Playwright E2E Test - ${new Date().toISOString()}`;
-    let uploadedFileId: string | null = null;
 
     await test.step('Upload a test file', async () => {
       // Create a temporary test file
@@ -241,4 +240,3 @@ test.describe('Golden Path: Complete File Lifecycle', () => {
     await expect(focusedElement).toBeVisible();
   });
 });
-
