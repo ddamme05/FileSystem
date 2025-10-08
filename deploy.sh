@@ -84,3 +84,4 @@ sleep 5
 echo ""
 echo "Container status:"
 docker compose ps
+
