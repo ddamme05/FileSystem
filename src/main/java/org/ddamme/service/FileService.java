@@ -23,6 +23,8 @@ public class FileService {
     private final MeterRegistry meterRegistry;
     @Value("${spring.servlet.multipart.max-file-size}")
     private DataSize maxFileSize;
+    @Value("${spring.profiles.active:dev}")
+    private String activeProfile;
 
     public FileMetadata upload(User user, MultipartFile file) {
         long start = System.nanoTime();
@@ -42,8 +44,9 @@ public class FileService {
             String originalName = file.getOriginalFilename() == null ? "file" : file.getOriginalFilename();
             String contentType = FileUtils.getContentTypeOrDefault(file.getContentType());
             contentFamily = Metrics.familyFromContentType(contentType);
-            String key =
-                    user.getId() + "/" + UUID.randomUUID() + "-" + FileUtils.sanitizeFilename(originalName);
+
+            // Add environment prefix to separate dev/prod files in the same bucket
+            String key = activeProfile + "/" + user.getId() + "/" + UUID.randomUUID() + "-" + FileUtils.sanitizeFilename(originalName);
 
             String storedKey = storageService.upload(file, key);
 
