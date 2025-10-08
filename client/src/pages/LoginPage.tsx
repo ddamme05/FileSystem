@@ -1,6 +1,6 @@
 import {useEffect} from 'react';
 import {useFormStatus} from 'react-dom';
-import {useNavigate} from 'react-router-dom';
+import {Link, useNavigate} from 'react-router-dom';
 import {toast} from 'sonner';
 import {useAuth} from '@/hooks/useAuth';
 import {api} from '@/api/client';
@@ -75,8 +75,15 @@ export function LoginPage() {
                     </div>
                     <SubmitButton/>
                 </form>
+                <div className="text-center">
+                    <p className="text-sm text-gray-600">
+                        Don't have an account?{' '}
+                        <Link to="/register" className="font-medium text-blue-600 hover:text-blue-500">
+                            Sign up
+                        </Link>
+                    </p>
+                </div>
             </div>
         </div>
     );
 }
-

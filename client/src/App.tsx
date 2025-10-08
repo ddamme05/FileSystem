@@ -9,6 +9,7 @@ import {ErrorBoundary} from '@/components/ErrorBoundary';
 import {AppShell} from '@/components/layout/AppShell';
 import {UploadPanel} from '@/components/files/UploadPanel';
 import {LoginPage} from '@/pages/LoginPage';
+import {RegisterPage} from '@/pages/RegisterPage';
 import {FilesPage} from '@/pages/FilesPage';
 
 const queryClient = new QueryClient({
@@ -30,6 +31,7 @@ export function App() {
                         <BrowserRouter>
                             <Routes>
                                 <Route path="/login" element={<LoginPage/>}/>
+                                <Route path="/register" element={<RegisterPage/>}/>
                                 <Route
                                     path="/"
                                     element={

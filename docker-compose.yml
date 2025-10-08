@@ -74,7 +74,7 @@ services:
       # AWS Config
       # For local dev: uses ~/.aws credentials (mounted below)
       # For EC2: Remove AWS_PROFILE, AWS_EC2_METADATA_DISABLED, and volumes; use IAM role instead
-      # If using EC2 IAM role and containers can't assume it, set IMDS hop limit: 
+      # If using EC2 IAM role and containers can't assume it, set IMDS hop limit:
       #   aws ec2 modify-instance-metadata-options --instance-id <ID> --http-put-response-hop-limit 2
       AWS_REGION: us-east-1
       AWS_S3_BUCKET: ${AWS_S3_BUCKET:-filesystem-s3}
