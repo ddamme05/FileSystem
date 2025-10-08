@@ -31,6 +31,9 @@ client/storybook-static/
 *.key
 *.pem
 
+# EC2-specific docker overrides
+docker-compose.override.yml
+
 # Git internals
 .git-rewrite/
 

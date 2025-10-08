@@ -3,12 +3,16 @@
 
 services:
   app:
+    cap_add: [ SETUID, SETGID, DAC_READ_SEARCH ]
     environment:
       DD_SERVICE: file-system-app
       SPRING_PROFILES_ACTIVE: prod
       DD_ENV: prod
 
+  frontend:
+    ports:
+      - "80:80"
+
   datadog:
     environment:
       DD_ENV: prod
-
