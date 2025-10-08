@@ -3,15 +3,19 @@
 
 services:
   app:
-    read_only: false
+    read_only: false  # EC2 needs write access for temp files
     cap_add: [ SETUID, SETGID, DAC_READ_SEARCH ]
+    volumes: []  # Remove AWS credentials mount
     environment:
       DD_SERVICE: file-system-app
       SPRING_PROFILES_ACTIVE: prod
       DD_ENV: prod
-      AWS_PROFILE: ""
-      AWS_EC2_METADATA_DISABLED: "false"
-    volumes: []
+      # EC2: Use IAM role via IMDSv2 - override local dev AWS config
+      AWS_PROFILE: ""  # Empty string tells AWS SDK to skip profile
+      AWS_SHARED_CREDENTIALS_FILE: ""  # Empty string tells AWS SDK to skip file
+      AWS_CONFIG_FILE: ""  # Empty string tells AWS SDK to skip file
+      AWS_EC2_METADATA_DISABLED: "false"  # Enable IMDSv2
+      AWS_SDK_LOAD_CONFIG: "true"
 
   frontend:
     ports:
