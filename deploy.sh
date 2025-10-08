@@ -85,10 +85,3 @@ echo ""
 echo "Container status:"
 docker compose ps
 
-# Show recent logs (non-blocking)
-echo ""
-echo "Recent logs (showing last 50 lines):"
-echo "========================================="
-docker compose logs --tail=50
-echo ""
-echo "Deployment complete! Use 'docker compose logs -f' to follow logs."

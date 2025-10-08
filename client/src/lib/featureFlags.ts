@@ -6,7 +6,7 @@ export const FEATURE_FLAGS = {
     DOWNLOAD_TICKET_EXPIRY_SECONDS: 60 as number,
 
     // Show env badge
-    SHOW_ENV_BADGE: true as boolean,
+    SHOW_ENV_BADGE: false as boolean,
 } as const;
 
 export function getDownloadApproach(): 'option-a' | 'option-b' | 'option-c' {
@@ -22,9 +22,3 @@ export function getCopyLinkTooltip(): string {
         return `Copy link (expires in ${FEATURE_FLAGS.DOWNLOAD_TICKET_EXPIRY_SECONDS}s)`;
     return 'Copy shareable link';
 }
-
-
-
-
-
-
