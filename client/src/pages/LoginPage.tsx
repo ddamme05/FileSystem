@@ -51,8 +51,6 @@ export function LoginPage() {
                 // Map backend error messages to user-friendly text
                 if (error.status === 401) {
                     message = 'Invalid username or password. Please try again.';
-                } else if (error.status === 429) {
-                    message = 'Too many login attempts. Please wait and try again.';
                 } else if (error.status >= 500) {
                     message = 'Server error. Please try again later.';
                 } else {
@@ -67,9 +65,12 @@ export function LoginPage() {
                 closeButton: true,
             });
 
-            // Trigger shake animation
+            // Trigger shake animation with cleanup
             setHasError(true);
-            setTimeout(() => setHasError(false), 600);
+            const timeoutId = setTimeout(() => setHasError(false), 600);
+
+            // Cleanup if component unmounts
+            return () => clearTimeout(timeoutId);
         } finally {
             setIsLoading(false);
         }
