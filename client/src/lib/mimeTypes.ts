@@ -5,7 +5,7 @@
 
 interface FileTypeInfo {
     label: string;
-    category: 'document' | 'spreadsheet' | 'presentation' | 'image' | 'video' | 'audio' | 'archive' | 'code' | 'text' | 'other';
+    category: 'document' | 'spreadsheet' | 'presentation' | 'image' | 'video' | 'audio' | 'archive' | 'code' | 'text' | 'executable' | 'other';
     previewable: boolean;
 }
 
@@ -107,6 +107,18 @@ const MIME_TYPE_MAP: Record<string, FileTypeInfo> = {
     'application/x-7z-compressed': {label: '7Z Archive', category: 'archive', previewable: false},
     'application/gzip': {label: 'GZIP Archive', category: 'archive', previewable: false},
     'application/x-tar': {label: 'TAR Archive', category: 'archive', previewable: false},
+
+    // Executables & Installers
+    'application/x-msdownload': {label: 'Executable', category: 'executable', previewable: false},
+    'application/x-executable': {label: 'Executable', category: 'executable', previewable: false},
+    'application/x-dosexec': {label: 'DOS Executable', category: 'executable', previewable: false},
+    'application/x-msi': {label: 'Windows Installer', category: 'executable', previewable: false},
+    'application/vnd.microsoft.portable-executable': {label: 'Windows Program', category: 'executable', previewable: false},
+    'application/x-mach-binary': {label: 'Mac Executable', category: 'executable', previewable: false},
+    'application/x-elf': {label: 'Linux Executable', category: 'executable', previewable: false},
+
+    // Generic binary
+    'application/octet-stream': {label: 'Binary File', category: 'other', previewable: false},
 };
 
 /**
@@ -130,6 +142,9 @@ export function getFileTypeInfo(mimeType: string): FileTypeInfo {
     if (mimeType.startsWith('text/')) {
         return {label: 'Text File', category: 'text', previewable: true};
     }
+    if (mimeType.startsWith('application/')) {
+        return {label: 'Application File', category: 'other', previewable: false};
+    }
 
     // Ultimate fallback
     return {label: 'File', category: 'other', previewable: false};
@@ -148,9 +163,3 @@ export function formatFileType(mimeType: string): string {
 export function isPreviewable(mimeType: string): boolean {
     return getFileTypeInfo(mimeType).previewable;
 }
-
-
-
-
-
-
