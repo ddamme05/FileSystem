@@ -78,11 +78,21 @@ export async function apiRequest<T>(endpoint: string, options?: RequestInit): Pr
     });
 
     if (!response.ok) {
-        // Auto-logout on 401
+        // Auto-logout on 401 - but NOT for auth endpoints or if already on login page
         if (response.status === 401) {
-            localStorage.removeItem('auth_token');
-            localStorage.removeItem('auth_user');
-            window.location.href = '/login';
+            const url = new URL(endpoint, window.location.origin);
+            const path = url.pathname;
+            const isAuthEndpoint = path.startsWith('/api/v1/auth/');
+            const isAlreadyOnLoginPage = window.location.pathname === '/login';
+
+            if (!isAuthEndpoint && !isAlreadyOnLoginPage) {
+                localStorage.removeItem('auth_token');
+                localStorage.removeItem('auth_user');
+                sessionStorage.setItem('auth_redirect_reason', 'expired');
+                window.location.replace('/login');
+                // Return a never-resolving promise to stop downstream handlers
+                return new Promise<never>(() => {});
+            }
         }
 
         const error = await parseError(response);
@@ -147,4 +157,3 @@ export const api = {
         }),
     delete: <T>(url: string) => apiRequest<T>(url, {method: 'DELETE'}),
 };
-

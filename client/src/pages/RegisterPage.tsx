@@ -1,23 +1,15 @@
-import {useEffect} from 'react';
-import {useFormStatus} from 'react-dom';
+import {useEffect, useState} from 'react';
 import {Link, useNavigate} from 'react-router-dom';
 import {toast} from 'sonner';
 import {useAuth} from '@/hooks/useAuth';
-import {api} from '@/api/client';
+import {api, ApiError} from '@/api/client';
 import type {AuthResponse} from '@/types/auth';
-
-function SubmitButton() {
-    const {pending} = useFormStatus();
-    return (
-        <button type="submit" disabled={pending} className="btn-primary w-full">
-            {pending ? 'Creating account...' : 'Sign Up'}
-        </button>
-    );
-}
 
 export function RegisterPage() {
     const {login, token} = useAuth();
     const navigate = useNavigate();
+    const [isLoading, setIsLoading] = useState(false);
+    const [hasError, setHasError] = useState(false);
 
     // Redirect if already logged in
     useEffect(() => {
@@ -26,19 +18,30 @@ export function RegisterPage() {
         }
     }, [token, navigate]);
 
-    async function handleRegister(formData: FormData) {
+    async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
+        e.preventDefault();
+        setIsLoading(true);
+
+        const formData = new FormData(e.currentTarget);
+
         const password = formData.get('password') as string;
         const confirmPassword = formData.get('confirmPassword') as string;
 
         // Validate passwords match
         if (password !== confirmPassword) {
-            toast.error('Passwords do not match');
+            toast.error('Passwords do not match', {duration: 8000, closeButton: true});
+            setHasError(true);
+            setTimeout(() => setHasError(false), 600);
+            setIsLoading(false);
             return;
         }
 
         // Validate password strength (basic check)
         if (password.length < 8) {
-            toast.error('Password must be at least 8 characters long');
+            toast.error('Password must be at least 8 characters long', {duration: 8000, closeButton: true});
+            setHasError(true);
+            setTimeout(() => setHasError(false), 600);
+            setIsLoading(false);
             return;
         }
 
@@ -55,8 +58,33 @@ export function RegisterPage() {
             toast.success('Account created successfully');
             navigate('/');
         } catch (error) {
-            const message = error instanceof Error ? error.message : 'Registration failed';
-            toast.error(message);
+            let message = 'Registration failed';
+
+            if (error instanceof ApiError) {
+                // Map backend error messages to user-friendly text
+                if (error.status === 409) {
+                    message = 'Username or email already exists. Please try another.';
+                } else if (error.status === 429) {
+                    message = 'Too many registration attempts. Please wait and try again.';
+                } else if (error.status >= 500) {
+                    message = 'Server error. Please try again later.';
+                } else {
+                    message = error.message;
+                }
+            } else if (error instanceof Error) {
+                message = error.message;
+            }
+
+            toast.error(message, {
+                duration: 8000,
+                closeButton: true,
+            });
+
+            // Trigger shake animation
+            setHasError(true);
+            setTimeout(() => setHasError(false), 600);
+        } finally {
+            setIsLoading(false);
         }
     }
 
@@ -69,7 +97,10 @@ export function RegisterPage() {
                         Join File Storage to manage your files
                     </p>
                 </div>
-                <form action={handleRegister} className="space-y-6">
+                <form
+                    onSubmit={handleRegister}
+                    className={`space-y-6 ${hasError ? 'animate-shake' : ''}`}
+                >
                     <div>
                         <label htmlFor="username" className="block text-sm font-medium">
                             Username
@@ -127,7 +158,9 @@ export function RegisterPage() {
                             className="mt-1 block w-full rounded border p-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                         />
                     </div>
-                    <SubmitButton/>
+                    <button type="submit" disabled={isLoading} className="btn-primary w-full">
+                        {isLoading ? 'Creating account...' : 'Sign Up'}
+                    </button>
                 </form>
                 <div className="text-center">
                     <p className="text-sm text-gray-600">
@@ -141,4 +174,3 @@ export function RegisterPage() {
         </div>
     );
 }
-
