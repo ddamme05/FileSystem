@@ -1,18 +1,56 @@
-import {useState} from 'react';
-import {CheckCircle2, ChevronDown, ChevronUp, Trash2, X, XCircle} from 'lucide-react';
+import {useMemo, useState} from 'react';
+import {CheckCircle2, ChevronDown, ChevronUp, Trash2, X, XCircle, AlertCircle} from 'lucide-react';
 
 import {useUploadContext} from '@/hooks/useUploadContext';
 import {formatFileSize} from '@/lib/formatters';
+import type {UploadErrorType} from '@/contexts/UploadContext';
 
 export function UploadPanel() {
     const {uploads, removeUpload, clearCompleted} = useUploadContext();
     const [isMinimized, setIsMinimized] = useState(false);
 
+    // Calculate batch statistics (last 5 minutes only)
+    const batchStats = useMemo(() => {
+        const now = Date.now();
+        const BATCH_WINDOW = 5 * 60 * 1000; // 5 minutes
+
+        const recentUploads = uploads.filter((u) => now - u.timestamp < BATCH_WINDOW);
+
+        const active = recentUploads.filter((u) => u.status === 'uploading').length;
+        const completed = recentUploads.filter((u) => u.status === 'success').length;
+        const failed = recentUploads.filter((u) => u.status === 'error').length;
+
+        // Group errors by type
+        const errorsByType = recentUploads
+            .filter((u) => u.status === 'error' && u.errorType)
+            .reduce((acc, u) => {
+                const type = u.errorType!;
+                if (!acc[type]) acc[type] = [];
+                acc[type].push(u.file.name);
+                return acc;
+            }, {} as Record<UploadErrorType, string[]>);
+
+        return {active, completed, failed, errorsByType, total: recentUploads.length};
+    }, [uploads]);
+
     if (uploads.length === 0) return null;
 
-    const activeUploads = uploads.filter((u) => u.status === 'uploading').length;
-    const completedUploads = uploads.filter((u) => u.status === 'success').length;
-    const failedUploads = uploads.filter((u) => u.status === 'error').length;
+    const getErrorMessage = (type: UploadErrorType): string => {
+        switch (type) {
+            case 'too_large':
+                return 'File too large (max 10MB)';
+            case 'duplicate':
+                return 'File already exists';
+            case 'network':
+                return 'Network error';
+            case 'forbidden':
+                return 'Permission denied';
+            case 'invalid_type':
+                return 'Invalid file type';
+            default:
+                return 'Upload failed';
+        }
+    };
 
     return (
         <div className="fixed bottom-4 right-4 w-96 bg-white rounded-lg shadow-xl border border-gray-200 z-50">
@@ -23,25 +61,25 @@ export function UploadPanel() {
             >
                 <div className="flex items-center gap-2">
                     <h3 className="font-semibold text-sm">
-                        {activeUploads > 0 ? (
-                            <>Uploading {activeUploads} file{activeUploads !== 1 ? 's' : ''}...</>
+                        {batchStats.active > 0 ? (
+                            <>Uploading {batchStats.active} file{batchStats.active !== 1 ? 's' : ''}...</>
                         ) : (
                             <>Upload Complete</>
                         )}
                     </h3>
-                    {completedUploads > 0 && (
+                    {batchStats.completed > 0 && (
                         <span className="text-xs text-green-600 font-medium">
-              {completedUploads} done
+              {batchStats.completed} done
             </span>
                     )}
-                    {failedUploads > 0 && (
+                    {batchStats.failed > 0 && (
                         <span className="text-xs text-red-600 font-medium">
-              {failedUploads} failed
+              {batchStats.failed} failed
             </span>
                     )}
                 </div>
                 <div className="flex items-center gap-2">
-                    {activeUploads === 0 && (
+                    {batchStats.active === 0 && uploads.length > 0 && (
                         <button
                             onClick={(e) => {
                                 e.stopPropagation();
@@ -56,6 +94,28 @@ export function UploadPanel() {
                     {isMinimized ? <ChevronUp size={16}/> : <ChevronDown size={16}/>}
                 </div>
             </div>
+
+            {/* Error Summary Banner */}
+            {!isMinimized && Object.keys(batchStats.errorsByType).length > 0 && (
+                <div className="px-4 py-3 bg-red-50 border-b border-red-100">
+                    <div className="flex items-start gap-2">
+                        <AlertCircle className="text-red-500 flex-shrink-0 mt-0.5" size={16}/>
+                        <div className="flex-1 text-xs">
+                            {Object.entries(batchStats.errorsByType).map(([type, files]) => (
+                                <div key={type} className="mb-1 last:mb-0">
+                                    <span className="font-medium text-red-700">
+                                        {files.length} {getErrorMessage(type as UploadErrorType)}:
+                                    </span>
+                                    <span className="text-red-600 ml-1">
+                                        {files.slice(0, 2).join(', ')}
+                                        {files.length > 2 && ` +${files.length - 2} more`}
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Upload List */}
             {!isMinimized && (
@@ -151,9 +211,3 @@ export function UploadPanel() {
         </div>
     );
 }
-
-
-
-
-
-
