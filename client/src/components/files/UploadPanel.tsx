@@ -24,7 +24,8 @@ export function UploadPanel() {
         const errorsByType = recentUploads
             .filter((u) => u.status === 'error' && u.errorType)
             .reduce((acc, u) => {
-                const type = u.errorType!;
+                const type = u.errorType;
+                if (!type) return acc; // Early return if no type
                 if (!acc[type]) acc[type] = [];
                 acc[type].push(u.file.name);
                 return acc;

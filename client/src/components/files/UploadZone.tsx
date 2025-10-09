@@ -81,8 +81,9 @@ export function UploadZone() {
 
         let counter = 1;
         let newName = originalName;
+        const MAX_ATTEMPTS = 9999; // Safeguard against infinite loop
 
-        while (filesData.files.some(f => f.originalFilename.toLowerCase() === newName.toLowerCase())) {
+        while (filesData.files.some(f => f.originalFilename.toLowerCase() === newName.toLowerCase()) && counter < MAX_ATTEMPTS) {
             newName = `${name}-${counter}${ext}`;
             counter++;
         }
