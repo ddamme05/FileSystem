@@ -28,6 +28,11 @@ export default defineConfig(({mode}) => ({
 
         rollupOptions: {
             output: {
+                // Force unique hashes by including timestamp
+                entryFileNames: `assets/[name]-[hash]-${Date.now()}.js`,
+                chunkFileNames: `assets/[name]-[hash]-${Date.now()}.js`,
+                assetFileNames: `assets/[name]-[hash]-${Date.now()}.[ext]`,
+
                 manualChunks: {
                     'react-vendor': ['react', 'react-dom', 'react-router-dom'],
                     'query-vendor': ['@tanstack/react-query'],
@@ -40,9 +45,3 @@ export default defineConfig(({mode}) => ({
         drop: mode === 'production' ? ['console', 'debugger'] : [],
     },
 }));
-
-
-
-
-
-

@@ -17,6 +17,12 @@ build
 .next
 out
 
+# Vite and TypeScript cache (CRITICAL: prevents stale builds)
+.vite
+node_modules/.vite
+.tsbuildinfo
+tsconfig.tsbuildinfo
+
 # Environment files
 .env
 .env.local
@@ -45,7 +51,3 @@ out
 .temp
 tmp
 *.log
-
-
-
-

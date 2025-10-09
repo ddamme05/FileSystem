@@ -15,6 +15,10 @@ RUN npm ci && npm cache clean --force
 # Copy source code
 COPY . .
 
+# Force a clean build directory inside the container
+# Clear ALL Vite caches to prevent hash collision issues
+#RUN rm -rf dist node_modules/.vite node_modules/.cache .vite
+
 # Build the application
 RUN npm run build
 
@@ -54,4 +58,3 @@ EXPOSE 80
 
 # Start nginx
 CMD ["nginx", "-g", "daemon off;"]
-
