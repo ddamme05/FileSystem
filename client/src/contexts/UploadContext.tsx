@@ -1,6 +1,8 @@
 /* eslint-disable react-refresh/only-export-components */
 import type {ReactNode} from 'react';
-import {createContext, useCallback, useState} from 'react';
+import {createContext, useCallback, useEffect, useState} from 'react';
+
+export type UploadErrorType = 'too_large' | 'network' | 'forbidden' | 'duplicate' | 'invalid_type' | 'unknown';
 
 export interface UploadItem {
     id: string;
@@ -8,8 +10,10 @@ export interface UploadItem {
     progress: number;
     status: 'uploading' | 'success' | 'error' | 'cancelled';
     error?: string;
+    errorType?: UploadErrorType;
     cancel?: () => void;
     fileId?: number;
+    timestamp: number; // When upload was added
 }
 
 interface UploadContextValue {
@@ -17,7 +21,7 @@ interface UploadContextValue {
     addUpload: (id: string, file: File, cancel: () => void) => void;
     updateProgress: (id: string, progress: number) => void;
     setUploadSuccess: (id: string, fileId: number) => void;
-    setUploadError: (id: string, error: string) => void;
+    setUploadError: (id: string, error: string, errorType?: UploadErrorType) => void;
     setUploadCancelled: (id: string) => void;
     removeUpload: (id: string) => void;
     clearCompleted: () => void;
@@ -25,8 +29,29 @@ interface UploadContextValue {
 
 export const UploadContext = createContext<UploadContextValue | null>(null);
 
+const AUTO_CLEAR_DELAY = 30000; // 30 seconds
+
 export function UploadProvider({children}: { children: ReactNode }) {
     const [uploads, setUploads] = useState<UploadItem[]>([]);
+
+    // Auto-clear completed uploads after 30 seconds
+    useEffect(() => {
+        const interval = setInterval(() => {
+            const now = Date.now();
+            setUploads((prev) => 
+                prev.filter((upload) => {
+                    // Keep if still uploading
+                    if (upload.status === 'uploading') return true;
+                    
+                    // Keep if completed/failed within last 30 seconds
+                    const age = now - upload.timestamp;
+                    return age < AUTO_CLEAR_DELAY;
+                })
+            );
+        }, 5000); // Check every 5 seconds
+
+        return () => clearInterval(interval);
+    }, []);
 
     const addUpload = useCallback((id: string, file: File, cancel: () => void): void => {
         const upload: UploadItem = {
@@ -35,6 +60,7 @@ export function UploadProvider({children}: { children: ReactNode }) {
             progress: 0,
             status: 'uploading',
             cancel,
+            timestamp: Date.now(),
         };
         setUploads((prev) => [upload, ...prev]); // Add to beginning
     }, []);
@@ -48,20 +74,20 @@ export function UploadProvider({children}: { children: ReactNode }) {
     const setUploadSuccess = useCallback((id: string, fileId: number) => {
         setUploads((prev) =>
             prev.map((u) =>
-                u.id === id ? {...u, status: 'success', progress: 100, fileId} : u
+                u.id === id ? {...u, status: 'success', progress: 100, fileId, timestamp: Date.now()} : u
             )
         );
     }, []);
 
-    const setUploadError = useCallback((id: string, error: string) => {
+    const setUploadError = useCallback((id: string, error: string, errorType: UploadErrorType = 'unknown') => {
         setUploads((prev) =>
-            prev.map((u) => (u.id === id ? {...u, status: 'error', error} : u))
+            prev.map((u) => (u.id === id ? {...u, status: 'error', error, errorType, timestamp: Date.now()} : u))
         );
     }, []);
 
     const setUploadCancelled = useCallback((id: string) => {
         setUploads((prev) =>
-            prev.map((u) => (u.id === id ? {...u, status: 'cancelled'} : u))
+            prev.map((u) => (u.id === id ? {...u, status: 'cancelled', timestamp: Date.now()} : u))
         );
     }, []);
 
