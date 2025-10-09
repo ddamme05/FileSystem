@@ -28,10 +28,9 @@ export default defineConfig(({mode}) => ({
 
         rollupOptions: {
             output: {
-                // Force unique hashes by including timestamp
-                entryFileNames: `assets/[name]-[hash]-${Date.now()}.js`,
-                chunkFileNames: `assets/[name]-[hash]-${Date.now()}.js`,
-                assetFileNames: `assets/[name]-[hash]-${Date.now()}.[ext]`,
+                entryFileNames: `assets/[name]-[hash].js`,
+                chunkFileNames: `assets/[name]-[hash].js`,
+                assetFileNames: `assets/[name]-[hash].[ext]`,
 
                 manualChunks: {
                     'react-vendor': ['react', 'react-dom', 'react-router-dom'],
