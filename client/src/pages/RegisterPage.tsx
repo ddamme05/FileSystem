@@ -31,18 +31,18 @@ export function RegisterPage() {
         if (password !== confirmPassword) {
             toast.error('Passwords do not match', {duration: 8000, closeButton: true});
             setHasError(true);
-            setTimeout(() => setHasError(false), 600);
+            const timeoutId = setTimeout(() => setHasError(false), 600);
             setIsLoading(false);
-            return;
+            return () => clearTimeout(timeoutId);
         }
 
         // Validate password strength (basic check)
         if (password.length < 8) {
             toast.error('Password must be at least 8 characters long', {duration: 8000, closeButton: true});
             setHasError(true);
-            setTimeout(() => setHasError(false), 600);
+            const timeoutId = setTimeout(() => setHasError(false), 600);
             setIsLoading(false);
-            return;
+            return () => clearTimeout(timeoutId);
         }
 
         try {
@@ -64,8 +64,6 @@ export function RegisterPage() {
                 // Map backend error messages to user-friendly text
                 if (error.status === 409) {
                     message = 'Username or email already exists. Please try another.';
-                } else if (error.status === 429) {
-                    message = 'Too many registration attempts. Please wait and try again.';
                 } else if (error.status >= 500) {
                     message = 'Server error. Please try again later.';
                 } else {
@@ -80,9 +78,10 @@ export function RegisterPage() {
                 closeButton: true,
             });
 
-            // Trigger shake animation
+            // Trigger shake animation with cleanup
             setHasError(true);
-            setTimeout(() => setHasError(false), 600);
+            const timeoutId = setTimeout(() => setHasError(false), 600);
+            return () => clearTimeout(timeoutId);
         } finally {
             setIsLoading(false);
         }
