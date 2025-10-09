@@ -9,8 +9,14 @@ interface DuplicateFileDialogProps {
 
 export function DuplicateFileDialog({fileName, onReplace, onKeepBoth, onCancel}: DuplicateFileDialogProps) {
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+        <div
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+            onClick={onCancel}
+        >
+            <div
+                className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4"
+                onClick={(e) => e.stopPropagation()}
+            >
                 {/* Header */}
                 <div className="flex items-start gap-3 p-6 border-b border-gray-200">
                     <AlertTriangle className="text-amber-500 flex-shrink-0 mt-0.5" size={24}/>
