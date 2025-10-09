@@ -1,23 +1,15 @@
-import {useEffect} from 'react';
-import {useFormStatus} from 'react-dom';
+import {useEffect, useState} from 'react';
 import {Link, useNavigate} from 'react-router-dom';
 import {toast} from 'sonner';
 import {useAuth} from '@/hooks/useAuth';
-import {api} from '@/api/client';
+import {api, ApiError} from '@/api/client';
 import type {AuthResponse} from '@/types/auth';
-
-function SubmitButton() {
-    const {pending} = useFormStatus();
-    return (
-        <button type="submit" disabled={pending} className="btn-primary w-full">
-            {pending ? 'Logging in...' : 'Login'}
-        </button>
-    );
-}
 
 export function LoginPage() {
     const {login, token} = useAuth();
     const navigate = useNavigate();
+    const [isLoading, setIsLoading] = useState(false);
+    const [hasError, setHasError] = useState(false);
 
     // Redirect if already logged in
     useEffect(() => {
@@ -26,7 +18,21 @@ export function LoginPage() {
         }
     }, [token, navigate]);
 
-    async function handleLogin(formData: FormData) {
+    // Show session expired toast if redirected from 401
+    useEffect(() => {
+        const reason = sessionStorage.getItem('auth_redirect_reason');
+        if (reason === 'expired') {
+            toast.error('Session expired. Please log in again.', {duration: 6000});
+            sessionStorage.removeItem('auth_redirect_reason');
+        }
+    }, []);
+
+    async function handleLogin(e: React.FormEvent<HTMLFormElement>) {
+        e.preventDefault();
+        setIsLoading(true);
+
+        const formData = new FormData(e.currentTarget);
+
         try {
             const response = await api.post<AuthResponse>('/api/v1/auth/login', {
                 username: formData.get('username'),
@@ -39,8 +45,33 @@ export function LoginPage() {
             toast.success('Logged in successfully');
             navigate('/');
         } catch (error) {
-            const message = error instanceof Error ? error.message : 'Login failed';
-            toast.error(message);
+            let message = 'Login failed';
+
+            if (error instanceof ApiError) {
+                // Map backend error messages to user-friendly text
+                if (error.status === 401) {
+                    message = 'Invalid username or password. Please try again.';
+                } else if (error.status === 429) {
+                    message = 'Too many login attempts. Please wait and try again.';
+                } else if (error.status >= 500) {
+                    message = 'Server error. Please try again later.';
+                } else {
+                    message = error.message;
+                }
+            } else if (error instanceof Error) {
+                message = error.message;
+            }
+
+            toast.error(message, {
+                duration: 8000,
+                closeButton: true,
+            });
+
+            // Trigger shake animation
+            setHasError(true);
+            setTimeout(() => setHasError(false), 600);
+        } finally {
+            setIsLoading(false);
         }
     }
 
@@ -48,7 +79,10 @@ export function LoginPage() {
         <div className="flex min-h-screen items-center justify-center bg-gray-50">
             <div className="w-full max-w-md space-y-8 rounded-lg bg-white p-8 shadow">
                 <h2 className="text-center text-3xl font-bold">File Storage</h2>
-                <form action={handleLogin} className="space-y-6">
+                <form
+                    onSubmit={handleLogin}
+                    className={`space-y-6 ${hasError ? 'animate-shake' : ''}`}
+                >
                     <div>
                         <label htmlFor="username" className="block text-sm font-medium">
                             Username
@@ -73,7 +107,9 @@ export function LoginPage() {
                             className="mt-1 block w-full rounded border p-2"
                         />
                     </div>
-                    <SubmitButton/>
+                    <button type="submit" disabled={isLoading} className="btn-primary w-full">
+                        {isLoading ? 'Logging in...' : 'Login'}
+                    </button>
                 </form>
                 <div className="text-center">
                     <p className="text-sm text-gray-600">
