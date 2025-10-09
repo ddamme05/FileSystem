@@ -46,7 +46,10 @@ export function App() {
                             </Routes>
                         </BrowserRouter>
                         <UploadPanel/>
-                        <Toaster position="top-right"/>
+                        <Toaster
+                            position="top-right"
+                            duration={5000}
+                        />
                     </UploadProvider>
                 </AuthProvider>
             </QueryClientProvider>
