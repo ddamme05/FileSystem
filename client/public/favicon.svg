@@ -1,0 +1,11 @@
+<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-label="File folder with document icon">
+  <g>
+    <path d="M12,10 H28 L32,16 H52 C53.1,16 54,16.9 54,18 V46 C54,47.1 53.1,48 52,48 H12 C10.9,48 10,47.1 10,46 V12 C10,10.9 10.9,10 12,10 Z" fill="#FFB300"/>
+    <path d="M12,22 H52 C53.1,22 54,22.9 54,24 V46 C54,47.1 53.1,48 52,48 H12 C10.9,48 10,47.1 10,46 V24 C10,22.9 10.9,22 12,22 Z" fill="#FFCA28"/>
+    <rect x="20" y="26" width="24" height="18" rx="2" fill="#FFFFFF" stroke="#E0E0E0" stroke-width="1"/>
+    <line x1="24" y1="32" x2="40" y2="32" stroke="#BDBDBD" stroke-width="2" stroke-linecap="round"/>
+    <line x1="24" y1="36" x2="40" y2="36" stroke="#BDBDBD" stroke-width="2" stroke-linecap="round"/>
+    <line x1="24" y1="40" x2="34" y2="40" stroke="#BDBDBD" stroke-width="2" stroke-linecap="round"/>
+  </g>
+</svg>
+
