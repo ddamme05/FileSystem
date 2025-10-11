@@ -3,11 +3,11 @@
 A secure, production-ready file storage application with S3 backend, JWT authentication, and comprehensive monitoring.
 
 **Stack:** Spring Boot 3.2 (Java 21) + React 19 + PostgreSQL + AWS S3 + Docker  
-**Status:** 🚀 Production-Ready & Fully Dockerized
+**Status:** Production-Ready & Fully Dockerized
 
 ---
 
-## 🎯 Features
+## Features
 
 - **Secure Authentication:** JWT-based auth with BCrypt password hashing
 - **File Operations:** Upload, download, preview, delete with drag-and-drop
@@ -20,7 +20,7 @@ A secure, production-ready file storage application with S3 backend, JWT authent
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 
@@ -51,7 +51,7 @@ This script will:
 
 ---
 
-## 🏗️ System Architecture
+## System Architecture
 
 ### Component Diagram
 
@@ -302,7 +302,7 @@ classDiagram
 
 ---
 
-## 🛠️ Technology Stack
+## Technology Stack
 
 ### Backend
 - **Framework:** Spring Boot 3.2.2
@@ -332,7 +332,7 @@ classDiagram
 
 ---
 
-## 📦 Project Structure
+## Project Structure
 
 ```
 File-System/
@@ -363,7 +363,7 @@ File-System/
 
 ---
 
-## 🔒 Security Features
+## Security Features
 
 ### Authentication & Authorization
 - JWT tokens with 24-hour expiration
@@ -391,7 +391,7 @@ File-System/
 
 ---
 
-## 🚢 Deployment Options
+## Deployment Options
 
 ### Option 1: Local Development (Docker Compose)
 
@@ -426,7 +426,7 @@ See deployment guides in `docs/` directory for complete instructions.
 
 ---
 
-## 🧪 Testing
+## Testing
 
 ### Backend Tests
 ```bash
@@ -448,7 +448,7 @@ npm run test
 
 ---
 
-## 📊 Monitoring
+## Monitoring
 
 ### Datadog Integration (Optional)
 
@@ -471,7 +471,7 @@ Comment out the `datadog` service in `docker-compose.yml` if not needed.
 
 ---
 
-## 🔧 Configuration
+## Configuration
 
 ### Environment Variables
 
@@ -507,7 +507,7 @@ openssl rand -base64 32 > .secrets/jwt_secret
 
 ---
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
 ### Backend won't start
 ```bash
@@ -539,14 +539,14 @@ docker-compose build app
 
 ---
 
-## 📈 Performance
+## Performance
 
 **Benchmarks from Datadog(t3.small EC2):**
 - File upload (1MB): ~500ms
 - File list (20 items): ~30ms
 - File download (presigned URL generation): ~20ms
 
-## 📄 License
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 

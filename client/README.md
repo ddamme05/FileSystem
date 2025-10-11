@@ -1,11 +1,11 @@
 # File Storage - React Frontend
 
-w**Stack:** React 19 + TypeScript + Vite + TanStack Query + Tailwind CSS  
-**Status:** ✅ Production-Ready with Security Hardening
+**Stack:** React 19 + TypeScript + Vite + TanStack Query + Tailwind CSS  
+**Status:** Production-Ready with Security Hardening
 
 ---
 
-## 🎯 Overview
+## Overview
 
 Modern, responsive file management interface with drag-and-drop upload, real-time progress tracking, and rich file
 previews.
@@ -25,20 +25,20 @@ previews.
 
 ---
 
-## 🛡️ Security Features
+## Security Features
 
-- ✅ **Strict Content Security Policy (CSP)** - Primary XSS defense
-- ✅ **Sandboxed Iframes** - Isolated preview content
-- ✅ **Referrer Policy** - Prevents S3 URL leaking
-- ✅ **Security Headers** - HSTS, X-Frame-Options, X-Content-Type-Options
-- ✅ **Rate Limiting UI** - User-friendly rate limit notifications
-- ✅ **Auto-Logout** - Automatic logout on 401 (token expiration)
-- ✅ **SQL Injection Protection** - Backend uses JPA prepared statements
-- ✅ **User Isolation** - Files are private to owner
+- **Strict Content Security Policy (CSP)** - Primary XSS defense
+- **Sandboxed Iframes** - Isolated preview content
+- **Referrer Policy** - Prevents S3 URL leaking
+- **Security Headers** - HSTS, X-Frame-Options, X-Content-Type-Options
+- **Rate Limiting UI** - User-friendly rate limit notifications
+- **Auto-Logout** - Automatic logout on 401 (token expiration)
+- **SQL Injection Protection** - Backend uses JPA prepared statements
+- **User Isolation** - Files are private to owner
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 
@@ -75,7 +75,7 @@ npm run dev
 
 ---
 
-## 📦 Available Commands
+## Available Commands
 
 ```bash
 # Development
@@ -97,7 +97,7 @@ npm run type-check       # TypeScript type checking
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
 ### Component Hierarchy
 
@@ -133,7 +133,7 @@ See [Frontend Architecture](../docs/FRONTEND_ARCHITECTURE.md) for detailed diagr
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 client/
@@ -195,7 +195,7 @@ client/
 
 ---
 
-## 🎨 Styling
+## Styling
 
 **Tailwind CSS 3** with custom configuration:
 
@@ -228,7 +228,7 @@ module.exports = {
 
 ---
 
-## 🔌 API Integration
+## API Integration
 
 ### API Client (`src/api/client.ts`)
 
@@ -270,7 +270,7 @@ try {
 
 ---
 
-## 🧪 Testing
+## Testing
 
 ### E2E Tests (Playwright)
 
@@ -310,7 +310,7 @@ npm run test:ui   # With UI
 
 ---
 
-## 🚢 Deployment
+## Deployment
 
 ### Docker Build
 
@@ -346,7 +346,7 @@ docker run -p 3000:80 file-system-frontend:latest
 
 ---
 
-## 🔍 Features in Detail
+## Features in Detail
 
 ### 1. File Upload
 
@@ -405,7 +405,7 @@ See [Filtering Architecture](../docs/FILTERING_ARCHITECTURE.md) for details.
 
 ---
 
-## 🔧 Configuration
+## Configuration
 
 ### Environment Variables
 
@@ -432,7 +432,7 @@ export const FEATURE_FLAGS = {
 
 ---
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
 ### Issue: Blank page after build
 
@@ -452,7 +452,7 @@ export const FEATURE_FLAGS = {
 
 ---
 
-## 📚 Further Reading
+## Further Reading
 
 - **[Frontend Architecture](../docs/FRONTEND_ARCHITECTURE.md)** - Detailed architecture guide
 - **[Filtering Architecture](../docs/FILTERING_ARCHITECTURE.md)** - Filter/sort implementation
@@ -464,7 +464,7 @@ export const FEATURE_FLAGS = {
 
 ---
 
-## 💡 Future Enhancements
+## Future Enhancements
 
 - [ ] Server-side filtering and sorting
 - [ ] Copy shareable link feature
