@@ -18,32 +18,18 @@ export function FilesPage() {
     const [deleteTarget, setDeleteTarget] = useState<{ id: number; name: string } | null>(null);
     const [previewFileId, setPreviewFileId] = useState<number | null>(null);
 
-    // Filter & Sort state
     const [sortField, setSortField] = useState<SortField>('uploadTimestamp');
     const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
     const [typeFilter, setTypeFilter] = useState<FileTypeFilter>('all');
     const [searchQuery, setSearchQuery] = useState('');
 
-    const {data, isLoading, error} = useFiles(page, size);
+    const {data: pagedFilesResponse, isLoading, error} = useFiles(page, size);
     const {downloadFile} = useDownloadFile();
     const deleteMutation = useDeleteFile();
 
-    // ⚠️ ARCHITECTURE NOTE: Client-side filtering/sorting
-    // Currently filtering and sorting happen CLIENT-SIDE on the fetched page slice.
-    // This can cause UX issues:
-    //   - Page counts may appear wrong (filtering after pagination)
-    //   - Items can "shuffle" across page boundaries
-    //   - Search only finds items on current page
-    //
-    // FUTURE IMPROVEMENT: Move these operations to the backend
-    //   - Update useFiles(page, size, sortField, sortOrder, typeFilter, searchQuery)
-    //   - Pass as query params: ?page=0&size=20&sort=name&order=asc&type=image&q=vacation
-    //   - Backend returns filtered/sorted slice + correct totalElements/totalPages
-    //   - Provides proper pagination UX and enables search across all files
     const filteredAndSortedFiles = useMemo(() => {
-        let result = [...(data?.files || [])];
+        let result = [...(pagedFilesResponse?.files || [])];
 
-        // Apply search filter
         if (searchQuery.trim()) {
             const query = searchQuery.toLowerCase();
             result = result.filter((file) =>
@@ -51,11 +37,9 @@ export function FilesPage() {
             );
         }
 
-        // Apply type filter
         if (typeFilter !== 'all') {
             result = result.filter((file) => {
                 const typeInfo = getFileTypeInfo(file.contentType);
-                // Handle combined "text" filter (text + code)
                 if (typeFilter === 'text') {
                     return typeInfo.category === 'text' || typeInfo.category === 'code';
                 }
@@ -63,7 +47,6 @@ export function FilesPage() {
             });
         }
 
-        // Apply sorting
         result.sort((a, b) => {
             let comparison = 0;
 
@@ -86,16 +69,14 @@ export function FilesPage() {
         });
 
         return result;
-    }, [data?.files, searchQuery, typeFilter, sortField, sortOrder]);
+    }, [pagedFilesResponse?.files, searchQuery, typeFilter, sortField, sortOrder]);
 
     const fileToPreview = filteredAndSortedFiles.find((f) => f.id === previewFileId) || null;
 
     const handleSortChange = (field: SortField) => {
         if (field === sortField) {
-            // Toggle order if clicking same field
             setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
         } else {
-            // Default to desc for new field (newest/largest first)
             setSortField(field);
             setSortOrder(field === 'uploadTimestamp' ? 'desc' : 'asc');
         }
@@ -171,10 +152,10 @@ export function FilesPage() {
                                 toast.info('Copy link feature coming soon!');
                             }}
                         />
-                        {data && data.totalPages > 0 && (
+                        {pagedFilesResponse && pagedFilesResponse.totalPages > 0 && (
                             <PaginationBar
-                                currentPage={data.currentPage}
-                                totalPages={data.totalPages}
+                                currentPage={pagedFilesResponse.currentPage}
+                                totalPages={pagedFilesResponse.totalPages}
                                 pageSize={size}
                                 onPageChange={setPage}
                                 onPageSizeChange={(newSize) => {

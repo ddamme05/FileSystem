@@ -91,7 +91,8 @@ export async function apiRequest<T>(endpoint: string, options?: RequestInit): Pr
                 sessionStorage.setItem('auth_redirect_reason', 'expired');
                 window.location.replace('/login');
                 // Return a never-resolving promise to stop downstream handlers
-                return new Promise<never>(() => {});
+                return new Promise<never>(() => {
+                });
             }
         }
 
@@ -104,9 +105,9 @@ export async function apiRequest<T>(endpoint: string, options?: RequestInit): Pr
                 import('sonner'),
                 import('@/components/RateLimitToast'),
                 import('react')
-            ]).then(([{toast}, {RateLimitToast}, React]) => {
+            ]).then(([{toast}, {RateLimitToast}, {createElement}]) => {
                 toast.custom(
-                    (id) => React.createElement(RateLimitToast, {
+                    (id) => createElement(RateLimitToast, {
                         retryAfter: error.retryAfter!,
                         onDismiss: () => toast.dismiss(id)
                     }),
@@ -118,19 +119,16 @@ export async function apiRequest<T>(endpoint: string, options?: RequestInit): Pr
         throw error;
     }
 
-    // ✅ Handle 204 No Content
     if (response.status === 204) {
         return undefined as T;
     }
 
-    // ✅ Check Content-Type
     const contentType = response.headers.get('content-type');
     if (!contentType?.includes('application/json')) {
         const text = await response.text();
         return {message: text || 'Success'} as T;
     }
 
-    // ✅ Handle empty body
     const text = await response.text();
     if (!text || text.trim() === '') {
         return undefined as T;

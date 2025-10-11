@@ -10,7 +10,7 @@ export function formatRelativeTime(date: Date | string): string {
     const rtf = new Intl.RelativeTimeFormat('en', {numeric: 'auto'});
     const now = Date.now();
     const then = typeof date === 'string' ? Date.parse(date) : date.getTime();
-    const diffMs = now - then; // ✅ FIXED: now - then (not then - now)
+    const diffMs = now - then;
     const diffSec = Math.round(diffMs / 1000);
     const diffMin = Math.round(diffSec / 60);
     const diffHour = Math.round(diffMin / 60);
@@ -28,4 +28,3 @@ export function formatRelativeTime(date: Date | string): string {
         day: 'numeric',
     }).format(then);
 }
-

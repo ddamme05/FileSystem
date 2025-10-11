@@ -15,7 +15,6 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class JwtSecurityGuard {
 
-    // Default JWT secret from application.yml (base64 encoded)
     private static final String DEFAULT_JWT_SECRET = "IkZTI0VwjSvZuMo99cXAx9xzeJhKHLyJODC5PoHsjO4=";
     private final Environment environment;
 

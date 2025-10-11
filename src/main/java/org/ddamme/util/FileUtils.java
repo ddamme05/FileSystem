@@ -36,25 +36,33 @@ public final class FileUtils {
      * RFC 5987 compliant percent-encoding for filename* parameter. Unlike URLEncoder, this doesn't
      * encode spaces as '+' and follows the RFC 5987 spec.
      */
-    public static String rfc5987Encode(String s) {
-        byte[] bytes = s.getBytes(StandardCharsets.UTF_8);
-        StringBuilder sb = new StringBuilder();
-        for (byte b : bytes) {
-            int ch = b & 0xFF;
+    public static String rfc5987Encode(String inputString) {
+        byte[] bytes = inputString.getBytes(StandardCharsets.UTF_8);
+        StringBuilder encodedResult = new StringBuilder();
+
+        for (byte byteValue : bytes) {
+            // Convert signed byte to unsigned int (0-255 range)
+            int codePoint = byteValue & 0xFF;
+
+            // RFC 5987 unreserved characters: alphanumeric and -._~
             boolean unreserved =
-                    (ch >= '0' && ch <= '9')
-                            || (ch >= 'A' && ch <= 'Z')
-                            || (ch >= 'a' && ch <= 'z')
-                            || ch == '-'
-                            || ch == '_'
-                            || ch == '.'
-                            || ch == '~';
+                    (codePoint >= '0' && codePoint <= '9')
+                            || (codePoint >= 'A' && codePoint <= 'Z')
+                            || (codePoint >= 'a' && codePoint <= 'z')
+                            || codePoint == '-'
+                            || codePoint == '_'
+                            || codePoint == '.'
+                            || codePoint == '~';
+
             if (unreserved) {
-                sb.append((char) ch);
+                // Safe characters can be used directly
+                encodedResult.append((char) codePoint);
             } else {
-                sb.append('%').append(String.format("%02X", ch));
+                // All other characters must be percent-encoded as %HH
+                encodedResult.append('%').append(String.format("%02X", codePoint));
             }
         }
-        return sb.toString();
+
+        return encodedResult.toString();
     }
 }

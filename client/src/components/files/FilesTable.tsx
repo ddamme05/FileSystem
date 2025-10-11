@@ -22,8 +22,8 @@ export function FilesTable({files, onPreview, onDownload, onDelete, onCopyLink}:
     // Track newly uploaded files and highlight them
     useEffect(() => {
         const newFileIds = uploads
-            .filter((u) => u.status === 'success' && u.fileId)
-            .map((u) => u.fileId!);
+            .filter((upload) => upload.status === 'success' && upload.fileId)
+            .map((upload) => upload.fileId!);
 
         if (newFileIds.length > 0) {
             setHighlightedIds(new Set(newFileIds));
@@ -143,4 +143,3 @@ export function FilesTable({files, onPreview, onDownload, onDelete, onCopyLink}:
         </div>
     );
 }
-

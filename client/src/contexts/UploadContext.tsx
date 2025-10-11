@@ -38,11 +38,11 @@ export function UploadProvider({children}: { children: ReactNode }) {
     useEffect(() => {
         const interval = setInterval(() => {
             const now = Date.now();
-            setUploads((prev) => 
+            setUploads((prev) =>
                 prev.filter((upload) => {
                     // Keep if still uploading
                     if (upload.status === 'uploading') return true;
-                    
+
                     // Keep if completed/failed within last 30 seconds
                     const age = now - upload.timestamp;
                     return age < AUTO_CLEAR_DELAY;
@@ -67,37 +67,43 @@ export function UploadProvider({children}: { children: ReactNode }) {
 
     const updateProgress = useCallback((id: string, progress: number) => {
         setUploads((prev) =>
-            prev.map((u) => (u.id === id ? {...u, progress} : u))
+            prev.map((upload) => (upload.id === id ? {...upload, progress} : upload))
         );
     }, []);
 
     const setUploadSuccess = useCallback((id: string, fileId: number) => {
         setUploads((prev) =>
-            prev.map((u) =>
-                u.id === id ? {...u, status: 'success', progress: 100, fileId, timestamp: Date.now()} : u
+            prev.map((upload) =>
+                upload.id === id ? {...upload, status: 'success', progress: 100, fileId, timestamp: Date.now()} : upload
             )
         );
     }, []);
 
     const setUploadError = useCallback((id: string, error: string, errorType: UploadErrorType = 'unknown') => {
         setUploads((prev) =>
-            prev.map((u) => (u.id === id ? {...u, status: 'error', error, errorType, timestamp: Date.now()} : u))
+            prev.map((upload) => (upload.id === id ? {
+                ...upload,
+                status: 'error',
+                error,
+                errorType,
+                timestamp: Date.now()
+            } : upload))
         );
     }, []);
 
     const setUploadCancelled = useCallback((id: string) => {
         setUploads((prev) =>
-            prev.map((u) => (u.id === id ? {...u, status: 'cancelled', timestamp: Date.now()} : u))
+            prev.map((upload) => (upload.id === id ? {...upload, status: 'cancelled', timestamp: Date.now()} : upload))
         );
     }, []);
 
     const removeUpload = useCallback((id: string) => {
-        setUploads((prev) => prev.filter((u) => u.id !== id));
+        setUploads((prev) => prev.filter((upload) => upload.id !== id));
     }, []);
 
     const clearCompleted = useCallback(() => {
         setUploads((prev) =>
-            prev.filter((u) => u.status === 'uploading')
+            prev.filter((upload) => upload.status === 'uploading')
         );
     }, []);
 

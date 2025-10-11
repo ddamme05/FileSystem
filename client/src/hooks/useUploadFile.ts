@@ -59,10 +59,8 @@ export function useUploadFile() {
             xhr.addEventListener('error', () => reject(new Error('Network error')));
             xhr.addEventListener('abort', () => reject(new Error('Upload cancelled')));
 
-            // ✅ open() BEFORE setRequestHeader()
             xhr.open('POST', '/api/v1/files/upload');
 
-            // ✅ Set auth header AFTER open()
             const token = getToken();
             if (token) {
                 xhr.setRequestHeader('Authorization', `Bearer ${token}`);
@@ -71,7 +69,6 @@ export function useUploadFile() {
             xhr.send(formData);
         });
 
-        // ✅ Return object with promise AND cancel
         return {
             promise,
             cancel: () => xhr.abort(),
@@ -80,4 +77,3 @@ export function useUploadFile() {
 
     return {uploadFile};
 }
-

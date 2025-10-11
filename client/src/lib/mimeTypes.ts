@@ -113,7 +113,11 @@ const MIME_TYPE_MAP: Record<string, FileTypeInfo> = {
     'application/x-executable': {label: 'Executable', category: 'executable', previewable: false},
     'application/x-dosexec': {label: 'DOS Executable', category: 'executable', previewable: false},
     'application/x-msi': {label: 'Windows Installer', category: 'executable', previewable: false},
-    'application/vnd.microsoft.portable-executable': {label: 'Windows Program', category: 'executable', previewable: false},
+    'application/vnd.microsoft.portable-executable': {
+        label: 'Windows Program',
+        category: 'executable',
+        previewable: false
+    },
     'application/x-mach-binary': {label: 'Mac Executable', category: 'executable', previewable: false},
     'application/x-elf': {label: 'Linux Executable', category: 'executable', previewable: false},
 

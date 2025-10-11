@@ -17,9 +17,8 @@ export function DuplicateFileDialog({fileName, onReplace, onKeepBoth, onCancel}:
                 className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4"
                 onClick={(e) => e.stopPropagation()}
             >
-                {/* Header */}
                 <div className="flex items-start gap-3 p-6 border-b border-gray-200">
-                    <AlertTriangle className="text-amber-500 flex-shrink-0 mt-0.5" size={24}/>
+                    <AlertTriangle className="w-5 h-5 text-amber-500 mt-0.5 flex-shrink-0"/>
                     <div>
                         <h2 className="text-lg font-semibold text-gray-900">File Already Exists</h2>
                         <p className="text-sm text-gray-600 mt-1">
@@ -28,7 +27,6 @@ export function DuplicateFileDialog({fileName, onReplace, onKeepBoth, onCancel}:
                     </div>
                 </div>
 
-                {/* Content */}
                 <div className="p-6">
                     <p className="text-sm text-gray-700 mb-4">
                         What would you like to do?
@@ -55,7 +53,6 @@ export function DuplicateFileDialog({fileName, onReplace, onKeepBoth, onCancel}:
                     </div>
                 </div>
 
-                {/* Footer */}
                 <div className="px-6 py-4 bg-gray-50 rounded-b-lg flex justify-end">
                     <button
                         onClick={onCancel}

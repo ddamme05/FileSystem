@@ -1,5 +1,5 @@
 import {useMemo, useState} from 'react';
-import {CheckCircle2, ChevronDown, ChevronUp, Trash2, X, XCircle, AlertCircle} from 'lucide-react';
+import {AlertCircle, CheckCircle2, ChevronDown, ChevronUp, Trash2, X, XCircle} from 'lucide-react';
 
 import {useUploadContext} from '@/hooks/useUploadContext';
 import {formatFileSize} from '@/lib/formatters';
@@ -14,20 +14,20 @@ export function UploadPanel() {
         const now = Date.now();
         const BATCH_WINDOW = 5 * 60 * 1000; // 5 minutes
 
-        const recentUploads = uploads.filter((u) => now - u.timestamp < BATCH_WINDOW);
+        const recentUploads = uploads.filter((upload) => now - upload.timestamp < BATCH_WINDOW);
 
-        const active = recentUploads.filter((u) => u.status === 'uploading').length;
-        const completed = recentUploads.filter((u) => u.status === 'success').length;
-        const failed = recentUploads.filter((u) => u.status === 'error').length;
+        const active = recentUploads.filter((upload) => upload.status === 'uploading').length;
+        const completed = recentUploads.filter((upload) => upload.status === 'success').length;
+        const failed = recentUploads.filter((upload) => upload.status === 'error').length;
 
         // Group errors by type
         const errorsByType = recentUploads
-            .filter((u) => u.status === 'error' && u.errorType)
-            .reduce((acc, u) => {
-                const type = u.errorType;
+            .filter((upload) => upload.status === 'error' && upload.errorType)
+            .reduce((acc, upload) => {
+                const type = upload.errorType;
                 if (!type) return acc; // Early return if no type
                 if (!acc[type]) acc[type] = [];
-                acc[type].push(u.file.name);
+                acc[type].push(upload.file.name);
                 return acc;
             }, {} as Record<UploadErrorType, string[]>);
 
