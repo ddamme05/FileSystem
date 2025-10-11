@@ -9,6 +9,8 @@ import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.util.Map;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -45,7 +47,7 @@ class JwtServiceTest {
     @DisplayName("generateToken with extra claims")
     void tokenWithExtraClaims() {
         String token =
-                jwtService.generateToken("alice", java.util.Map.of("role", "admin", "department", "IT"));
+                jwtService.generateToken("alice", Map.of("role", "admin", "department", "IT"));
         assertThat(token).isNotBlank();
         assertThat(jwtService.extractSubject(token)).isEqualTo("alice");
         assertThat(jwtService.isValid(token, "alice")).isTrue();

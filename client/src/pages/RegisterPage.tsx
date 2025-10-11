@@ -1,4 +1,4 @@
-import {useEffect, useState} from 'react';
+import {type FormEvent, useEffect, useState} from 'react';
 import {Link, useNavigate} from 'react-router-dom';
 import {toast} from 'sonner';
 import {useAuth} from '@/hooks/useAuth';
@@ -18,7 +18,7 @@ export function RegisterPage() {
         }
     }, [token, navigate]);
 
-    async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
+    async function handleRegister(e: FormEvent<HTMLFormElement>) {
         e.preventDefault();
         setIsLoading(true);
 

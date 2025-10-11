@@ -1,4 +1,4 @@
-import {useEffect, useState} from 'react';
+import {type FormEvent, useEffect, useState} from 'react';
 import {Link, useNavigate} from 'react-router-dom';
 import {toast} from 'sonner';
 import {useAuth} from '@/hooks/useAuth';
@@ -11,7 +11,6 @@ export function LoginPage() {
     const [isLoading, setIsLoading] = useState(false);
     const [hasError, setHasError] = useState(false);
 
-    // Redirect if already logged in
     useEffect(() => {
         if (token) {
             navigate('/', {replace: true});
@@ -27,7 +26,7 @@ export function LoginPage() {
         }
     }, []);
 
-    async function handleLogin(e: React.FormEvent<HTMLFormElement>) {
+    async function handleLogin(e: FormEvent<HTMLFormElement>) {
         e.preventDefault();
         setIsLoading(true);
 

@@ -23,6 +23,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.Objects;
 
 @Component
@@ -117,7 +118,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
             // Use ErrorResponse for consistent timestamp formatting
             var errorResponse =
                     new ErrorResponse(
-                            java.time.Instant.now(),
+                            Instant.now(),
                             429,
                             "Too Many Requests",
                             props.getMessage(),

@@ -32,9 +32,8 @@ export function PreviewModal({
     const isVideo = file.contentType.startsWith('video/');
     const isAudio = file.contentType.startsWith('audio/');
 
-    // Find previewable files for navigation (images only for MVP)
-    const previewableFiles = files.filter((f) => f.contentType.startsWith('image/'));
-    const currentIndex = previewableFiles.findIndex((f) => f.id === file.id);
+    const previewableFiles = files.filter((previewFile) => previewFile.contentType.startsWith('image/'));
+    const currentIndex = previewableFiles.findIndex((previewFile) => previewFile.id === file.id);
     const canNavigate = isImage && previewableFiles.length > 1;
     const hasPrevious = canNavigate && currentIndex > 0;
     const hasNext = canNavigate && currentIndex < previewableFiles.length - 1;
@@ -304,4 +303,3 @@ export function PreviewModal({
         </div>
     );
 }
-
