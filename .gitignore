@@ -80,6 +80,7 @@ ehthumbs.db
 Thumbs.db
 
 # Python (for helper scripts)
+*.py
 *.pyc
 *.pyo
 *.pyd

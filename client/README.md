@@ -7,9 +7,11 @@ w**Stack:** React 19 + TypeScript + Vite + TanStack Query + Tailwind CSS
 
 ## 🎯 Overview
 
-Modern, responsive file management interface with drag-and-drop upload, real-time progress tracking, and rich file previews.
+Modern, responsive file management interface with drag-and-drop upload, real-time progress tracking, and rich file
+previews.
 
 **Key Features:**
+
 - Drag-and-drop file upload with duplicate detection
 - Real-time upload progress tracking
 - Rich file previews (images, PDFs, text, video, audio)
@@ -119,10 +121,12 @@ App (Router Root)
 ### State Management
 
 **Global State:**
+
 - **AuthContext:** JWT token, user info, login/logout
 - **UploadContext:** Upload queue, progress tracking, error handling
 
 **Server State:**
+
 - **TanStack Query:** Caches file listings, auto-revalidation
 
 See [Frontend Architecture](../docs/FRONTEND_ARCHITECTURE.md) for detailed diagrams.
@@ -198,25 +202,26 @@ client/
 ```javascript
 // tailwind.config.js
 module.exports = {
-  content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
-  theme: {
-    extend: {
-      animation: {
-        shake: 'shake 0.5s ease-in-out',
-      },
-      keyframes: {
-        shake: {
-          '0%, 100%': { transform: 'translateX(0)' },
-          '10%, 30%, 50%, 70%, 90%': { transform: 'translateX(-10px)' },
-          '20%, 40%, 60%, 80%': { transform: 'translateX(10px)' },
+    content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
+    theme: {
+        extend: {
+            animation: {
+                shake: 'shake 0.5s ease-in-out',
+            },
+            keyframes: {
+                shake: {
+                    '0%, 100%': {transform: 'translateX(0)'},
+                    '10%, 30%, 50%, 70%, 90%': {transform: 'translateX(-10px)'},
+                    '20%, 40%, 60%, 80%': {transform: 'translateX(10px)'},
+                },
+            },
         },
-      },
     },
-  },
 };
 ```
 
 **Custom Utilities:**
+
 - `.btn-primary` - Primary action button
 - `.btn-secondary` - Secondary action button
 - `.animate-shake` - Error shake animation
@@ -228,6 +233,7 @@ module.exports = {
 ### API Client (`src/api/client.ts`)
 
 **Features:**
+
 - Automatic JWT token injection
 - Request/response correlation IDs
 - Global error handling
@@ -236,8 +242,9 @@ module.exports = {
 - Type-safe responses
 
 **Usage:**
+
 ```typescript
-import { api } from '@/api/client';
+import {api} from '@/api/client';
 
 // GET request
 const response = await api.get<PagedFileResponse>('/api/v1/files?page=0&size=20');
@@ -250,13 +257,14 @@ await api.delete(`/api/v1/files/${fileId}`);
 ```
 
 **Error Handling:**
+
 ```typescript
 try {
-  await api.post('/api/v1/files/upload', data);
+    await api.post('/api/v1/files/upload', data);
 } catch (error) {
-  if (error instanceof ApiError) {
-    console.error('API Error:', error.status, error.message);
-  }
+    if (error instanceof ApiError) {
+        console.error('API Error:', error.status, error.message);
+    }
 }
 ```
 
@@ -267,6 +275,7 @@ try {
 ### E2E Tests (Playwright)
 
 **Coverage:**
+
 - ✅ User registration
 - ✅ User login
 - ✅ File upload
@@ -276,6 +285,7 @@ try {
 - ✅ Logout
 
 **Run Tests:**
+
 ```bash
 # Headless mode
 npm run test:e2e
@@ -305,6 +315,7 @@ npm run test:ui   # With UI
 ### Docker Build
 
 **Multi-stage Dockerfile:**
+
 1. **Build stage:** Install dependencies + build app
 2. **Runtime stage:** Nginx serves static files
 
@@ -319,6 +330,7 @@ docker run -p 3000:80 file-system-frontend:latest
 ### Production Configuration
 
 **Nginx (`nginx.conf`):**
+
 - Serves React app from `/usr/share/nginx/html`
 - SPA routing (fallback to `index.html`)
 - Health check endpoint at `/health`
@@ -326,6 +338,7 @@ docker run -p 3000:80 file-system-frontend:latest
 - Gzip compression
 
 **Build Output:**
+
 - Minified JavaScript bundles
 - CSS extracted and minified
 - Assets with cache-busting hashes
@@ -338,17 +351,20 @@ docker run -p 3000:80 file-system-frontend:latest
 ### 1. File Upload
 
 **Drag-and-Drop:**
+
 - Uses `react-dropzone` library
 - Visual feedback on drag over
 - Multi-file support
 - File size validation (10MB max)
 
 **Duplicate Detection:**
+
 - Checks existing files before upload
 - Offers "Replace" or "Keep Both" options
 - "Keep Both" appends `-1`, `-2`, etc. to filename
 
 **Progress Tracking:**
+
 - Real-time progress via XMLHttpRequest
 - Upload panel shows all active/completed uploads
 - Cancellable uploads
@@ -357,6 +373,7 @@ docker run -p 3000:80 file-system-frontend:latest
 ### 2. File Preview
 
 **Supported Formats:**
+
 - **Images:** All formats (JPEG, PNG, GIF, WebP, SVG)
 - **PDFs:** Embedded viewer (toolbar hidden)
 - **Text:** Plain text, Markdown, CSV, code files
@@ -364,6 +381,7 @@ docker run -p 3000:80 file-system-frontend:latest
 - **Audio:** MP3, WAV, OGG (HTML5 audio)
 
 **Features:**
+
 - Keyboard navigation (Arrow keys, Escape)
 - Previous/Next for images
 - Sandboxed iframes for security
@@ -372,10 +390,12 @@ docker run -p 3000:80 file-system-frontend:latest
 ### 3. Filtering and Sorting
 
 **Filter Options:**
+
 - Type: All, Image, Video, Audio, Document, Text, Archive, Other
 - Search: Case-insensitive substring match
 
 **Sort Options:**
+
 - Field: Name, Size, Type, Upload Date
 - Order: Ascending, Descending
 
@@ -390,11 +410,13 @@ See [Filtering Architecture](../docs/FILTERING_ARCHITECTURE.md) for details.
 ### Environment Variables
 
 **Development (`.env`):**
+
 ```bash
 VITE_API_URL=http://localhost:8080
 ```
 
 **Production:**
+
 - API URL is relative (proxied by Nginx)
 - No environment variables needed
 
@@ -404,7 +426,7 @@ VITE_API_URL=http://localhost:8080
 
 ```typescript
 export const FEATURE_FLAGS = {
-  ENABLE_COPY_LINK: false,  // Copy link feature (coming soon)
+    ENABLE_COPY_LINK: false,  // Copy link feature (coming soon)
 };
 ```
 
@@ -413,15 +435,19 @@ export const FEATURE_FLAGS = {
 ## 🐛 Troubleshooting
 
 ### Issue: Blank page after build
+
 **Solution:** Check Vite build output, ensure `base` path is correct
 
 ### Issue: API calls fail with CORS error
+
 **Solution:** Ensure backend CORS is configured for frontend origin
 
 ### Issue: Upload shows 413 (Payload Too Large)
+
 **Solution:** Check Nginx `client_max_body_size` setting
 
 ### Issue: Preview shows "Failed to load"
+
 **Solution:** Check S3 presigned URL accessibility, verify CORS on S3 bucket
 
 ---
