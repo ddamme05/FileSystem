@@ -1,6 +1,6 @@
 # File Storage System
 
-A secure, production-ready file storage application with S3 backend, JWT authentication, and comprehensive monitoring.
+This is a production-ready file storage application that keeps your files secure in S3. It comes with JWT authentication to protect your data and comprehensive monitoring so you know what's happening under the hood.
 
 **Stack:** Spring Boot 3.2 (Java 21) + React 19 + PostgreSQL + AWS S3 + Docker  
 **Status:** Production-Ready & Fully Dockerized
@@ -15,8 +15,9 @@ A secure, production-ready file storage application with S3 backend, JWT authent
 - **Rich Previews:** Images, PDFs, text files, videos, and audio
 - **User Isolation:** Every file is private to its owner
 - **Rate Limiting:** Protect against abuse with configurable limits
-- **Observability:** Datadog APM integration with metrics and traces
-- **Production Security:** HTTPS, CSP, security headers, and hardened containers
+- **Observability:** OpenTelemetry metrics exported to Datadog APM for full-stack monitoring
+- **Production Security:** HTTPS, HTTP/3 support, CSP, security headers, and hardened containers
+- **Modern Protocols:** HTTP/3 with QUIC for improved performance and reduced latency
 
 ---
 
@@ -311,7 +312,7 @@ classDiagram
 - **ORM:** Spring Data JPA (Hibernate)
 - **Security:** Spring Security + JWT
 - **Storage:** AWS S3 SDK
-- **Observability:** Micrometer + Datadog APM
+- **Observability:** Micrometer + OpenTelemetry (OTLP) → Datadog APM
 - **Build Tool:** Gradle 8.5
 
 ### Frontend
@@ -325,7 +326,7 @@ classDiagram
 
 ### Infrastructure
 - **Containerization:** Docker + Docker Compose
-- **Web Server:** Nginx (reverse proxy + static serving)
+- **Web Server:** Nginx with HTTP/2 and HTTP/3 (QUIC) support
 - **Deployment:** AWS EC2 (production) or local Docker
 - **DNS:** DuckDNS (free dynamic DNS)
 - **SSL:** Let's Encrypt (Certbot)
@@ -364,6 +365,59 @@ File-System/
 ---
 
 ## Security Features
+
+This application addresses multiple vulnerabilities from the **OWASP Top 10 2021**:
+
+### OWASP Top 10 2021 Coverage
+
+#### A01:2021 – Broken Access Control ✅
+- **User Isolation:** All file operations verify ownership through JPA queries with user context
+- **Authorization Checks:** Every API endpoint validates the authenticated user owns the resource
+- **JWT Authentication:** Token-based auth with 24-hour expiration prevents session hijacking
+
+#### A02:2021 – Cryptographic Failures ✅
+- **BCrypt Password Hashing:** All passwords hashed with strength 12 (2^12 iterations)
+- **TLS 1.2/1.3 Only:** HTTPS enforced in production with strong cipher suites
+- **Secure Secrets Management:** JWT secrets and credentials stored in Docker secrets, never in code
+- **HSTS Enabled:** Strict-Transport-Security headers prevent downgrade attacks
+
+#### A03:2021 – Injection ✅
+- **SQL Injection Protection:** JPA with parameterized queries (no raw SQL)
+- **Input Validation:** Bean Validation annotations (@NotBlank, @Email, @Size) on all DTOs
+- **Content-Type Validation:** Strict MIME type checking on file uploads
+
+#### A04:2021 – Insecure Design ✅
+- **Rate Limiting:** Bucket4j-based rate limiting per route (login, upload, API)
+- **Principle of Least Privilege:** Non-root containers with dropped capabilities
+- **Fail-Safe Defaults:** Deny-by-default security configuration
+
+#### A05:2021 – Security Misconfiguration ✅
+- **Security Headers:** CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy
+- **CORS Configuration:** Strict origin validation, no wildcard origins
+- **Error Handling:** Generic error messages to external users, detailed logs internally
+- **Server Hardening:** Nginx server tokens disabled, unnecessary headers removed
+
+#### A07:2021 – Identification and Authentication Failures ✅
+- **Strong Password Policy:** Minimum 8 characters with complexity requirements
+- **JWT Best Practices:** HS256 signing, short expiration, secure secret rotation support
+- **Auto-Logout:** Frontend automatically logs out on 401 responses
+- **No Default Credentials:** Demo user only for local testing, disabled in production
+
+#### A08:2021 – Software and Data Integrity Failures ✅
+- **Dependency Management:** Gradle dependency verification, regular updates
+- **Container Image Integrity:** Multi-stage Docker builds with pinned base images
+- **Audit Logging:** All security events logged with correlation IDs
+
+#### A09:2021 – Security Logging and Monitoring Failures ✅
+- **Comprehensive Logging:** Request correlation IDs, structured JSON logs (Logback)
+- **OpenTelemetry Integration:** Metrics and traces exported to Datadog via OTLP
+- **Business Metrics:** Upload/download counts, rate limit hits, auth failures
+- **Real-Time Monitoring:** Datadog APM dashboards for HTTP latency, error rates, JVM metrics
+
+#### A10:2021 – Server-Side Request Forgery (SSRF) ✅
+- **No User-Controlled URLs:** S3 presigned URLs generated server-side only
+- **Input Validation:** All external inputs validated before processing
+- **Network Segmentation:** Backend isolated from public internet in Docker network
 
 ### Authentication & Authorization
 - JWT tokens with 24-hour expiration
@@ -450,24 +504,42 @@ npm run test
 
 ## Monitoring
 
-### Datadog Integration (Optional)
+### OpenTelemetry + Datadog Integration
 
-The application includes Datadog APM integration for production monitoring:
+The application uses **OpenTelemetry (OTLP)** to export metrics and traces to **Datadog APM** for production monitoring. All metrics are collected via Micrometer and sent through the Datadog agent's OTLP endpoints.
 
 **Metrics Tracked:**
-- HTTP request rates and latency
-- Database query performance
-- S3 operation metrics
-- JVM metrics (heap, GC, threads)
-- Custom business metrics (uploads, downloads, errors)
+- **HTTP Metrics:** Request rates, latency (p95/p99), error rates by endpoint
+- **Database Performance:** Query execution time, connection pool stats
+- **S3 Operations:** Upload/download metrics, presigned URL generation time
+- **JVM Metrics:** Heap usage, GC pause time, thread counts (via Datadog profiling)
+- **Business Metrics:** File upload bytes distribution, success/failure counters
+- **Rate Limiting:** Rate limit rejections by route
+
+**Architecture:**
+- **Backend:** Spring Boot → Micrometer → OTLP exporter → Datadog agent (port 4318)
+- **Agent:** Datadog agent receives OTLP and forwards to Datadog cloud
+- **100% OTLP:** No legacy StatsD - fully modern OpenTelemetry pipeline
 
 **Setup:**
-1. Sign up for Datadog
+1. Sign up for Datadog (free trial available)
 2. Add API key to `.secrets/dd_api_key`
-3. Restart services
+3. Set Datadog site to `.secrets/dd_site` (e.g., `datadoghq.com`)
+4. Restart services with `docker-compose up -d`
+
+**Configuration:**
+```yaml
+# Backend exports metrics via OTLP
+management.otlp.metrics.export.url: http://datadog:4318/v1/metrics
+
+# Datadog agent receives OTLP and forwards to cloud
+DD_OTLP_CONFIG_RECEIVER_PROTOCOLS_HTTP_ENDPOINT: "0.0.0.0:4318"
+DD_PROFILING_ENABLED: "true"
+DD_RUNTIME_METRICS_ENABLED: "false"  # Using OTLP instead of StatsD
+```
 
 **Remove Datadog:**
-Comment out the `datadog` service in `docker-compose.yml` if not needed.
+If you don't need monitoring, comment out the `datadog` service in `docker-compose.yml` and remove the `MANAGEMENT_OTLP_METRICS_EXPORT_URL` environment variable from the `app` service.
 
 ---
 

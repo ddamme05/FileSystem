@@ -1,5 +1,7 @@
 # File Storage - React Frontend
 
+This is the user-facing side of the file storage system, built with modern React. It gives you a clean interface to manage your files with drag-and-drop uploads, real-time progress tracking, and rich previews for all kinds of file types.
+
 **Stack:** React 19 + TypeScript + Vite + TanStack Query + Tailwind CSS  
 **Status:** Production-Ready with Security Hardening
 
@@ -20,6 +22,7 @@ previews.
 - JWT authentication with auto-logout
 - Rate limit notifications
 - E2E tested with Playwright
+- HTTP/3 (QUIC) support for faster transfers in production
 
 **Architecture Details:** See [Frontend Architecture](../docs/FRONTEND_ARCHITECTURE.md)
 
@@ -27,14 +30,18 @@ previews.
 
 ## Security Features
 
-- **Strict Content Security Policy (CSP)** - Primary XSS defense
-- **Sandboxed Iframes** - Isolated preview content
-- **Referrer Policy** - Prevents S3 URL leaking
-- **Security Headers** - HSTS, X-Frame-Options, X-Content-Type-Options
-- **Rate Limiting UI** - User-friendly rate limit notifications
-- **Auto-Logout** - Automatic logout on 401 (token expiration)
-- **SQL Injection Protection** - Backend uses JPA prepared statements
-- **User Isolation** - Files are private to owner
+This frontend implements multiple **OWASP Top 10 2021** defenses:
+
+- **Strict Content Security Policy (CSP)** - Primary XSS defense (A03: Injection)
+- **Sandboxed Iframes** - Isolated preview content prevents malicious file execution
+- **Referrer Policy** - Prevents S3 URL leaking to external sites (A05: Security Misconfiguration)
+- **Security Headers** - HSTS, X-Frame-Options, X-Content-Type-Options (A05)
+- **Rate Limiting UI** - User-friendly notifications when rate limits hit (A04: Insecure Design)
+- **Auto-Logout** - Automatic logout on 401 prevents stale sessions (A07: Auth Failures)
+- **Input Validation** - Client-side checks before server submission (A03: Injection)
+- **User Isolation** - Files are private to owner, enforced by backend (A01: Broken Access Control)
+
+**Backend Protection:** SQL injection protection via JPA prepared statements, BCrypt password hashing
 
 ---
 
@@ -317,7 +324,7 @@ npm run test:ui   # With UI
 **Multi-stage Dockerfile:**
 
 1. **Build stage:** Install dependencies + build app
-2. **Runtime stage:** Nginx serves static files
+2. **Runtime stage:** Nginx serves static files with HTTP/2 and HTTP/3 (QUIC) support
 
 ```bash
 # Build image
@@ -334,8 +341,9 @@ docker run -p 3000:80 file-system-frontend:latest
 - Serves React app from `/usr/share/nginx/html`
 - SPA routing (fallback to `index.html`)
 - Health check endpoint at `/health`
-- Security headers
-- Gzip compression
+- Security headers (CSP, HSTS, X-Frame-Options)
+- Gzip compression for performance
+- HTTP/2 and HTTP/3 (QUIC) enabled in production for improved performance
 
 **Build Output:**
 
@@ -343,6 +351,10 @@ docker run -p 3000:80 file-system-frontend:latest
 - CSS extracted and minified
 - Assets with cache-busting hashes
 - Source maps for debugging
+
+**Observability:**
+
+The frontend works with the backend's **OpenTelemetry integration**. All API calls are automatically traced through the correlation ID system, and metrics are exported to **Datadog APM** via the backend's OTLP pipeline.
 
 ---
 
