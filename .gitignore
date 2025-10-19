@@ -38,11 +38,6 @@ docker-compose.override.yml
 .git-rewrite/
 
 # Development scripts (not for commit)
-find_deprecations.sh
-find_deprecations.py
-organize_commits.sh
-organize_commits.py
-generate_*.py
 nul
 
 # IDE files
@@ -96,30 +91,9 @@ env/
 
 # Documentation & snapshots
 codebase.md
-config_snapshot.md
-jwt_snapshot.md
-*_snapshot.md
-*_snapshot_*.md  
-*.snapshot
-feature_improvements_snapshot_current.md
 
 # Project planning
 PROJECT_PLAN.md
-# Observability snapshots (temporary)
-observability_snapshot_*.md
 
 # LocalStack data directory
 .localstack/
-
-# Observability snapshot (temporary)
-observability_snapshot.md
-
-# Frontend snapshot (temporary)
-frontend_snapshot.md
-
-# Frontend docs snapshot (temporary)
-frontend_docs_snapshot.md
-
-# Client snapshots
-client_code_snapshot.md
-client_config_snapshot.md
