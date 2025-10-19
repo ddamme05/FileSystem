@@ -69,7 +69,7 @@ metrics:
   s3:
     health:
       enabled: true
-      period: 300000  # 5 minutes - reduces health checks to ~8,640/month (was 43,200 at 1min)
+      period: 300000
 
 security:
   jwt:
