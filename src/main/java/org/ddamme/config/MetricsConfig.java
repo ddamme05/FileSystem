@@ -35,6 +35,11 @@ public class MetricsConfig {
     private final S3Client s3Client;
     private final AwsProperties awsProperties;
 
+    // Pre-registered timers to avoid re-registration on every health check
+    private Timer s3HealthUpTimer;
+    private Timer s3HealthDownTimer;
+    private Counter s3HealthErrorCounter;
+
     /**
      * Capacity gauges for tracking storage growth and cost planning.
      */
@@ -49,15 +54,28 @@ public class MetricsConfig {
             Gauge.builder("fs.bytes.total", metadataRepository, repo -> (double) repo.sumSizes())
                     .baseUnit("bytes")
                     .register(r);
+
+            // Initialize S3 health check timers once
+            s3HealthUpTimer = Timer.builder("dep.s3.check.latency")
+                    .tag("result", "up")
+                    .register(r);
+
+            s3HealthDownTimer = Timer.builder("dep.s3.check.latency")
+                    .tag("result", "down")
+                    .register(r);
+
+            s3HealthErrorCounter = Counter.builder("dep.s3.check.errors")
+                    .tag("error", "general")
+                    .register(r);
         };
     }
 
     /**
-     * S3 dependency health check - runs every 60 seconds by default.
+     * S3 dependency health check - runs every 5 minutes by default.
      * Provides early warning when bucket/IMDS/permissions break.
      * Can be disabled via metrics.s3.health.enabled=false for dev/test environments.
      */
-    @Scheduled(fixedDelayString = "${metrics.s3.health.period:60000}")
+    @Scheduled(fixedDelayString = "${metrics.s3.health.period:300000}")
     @ConditionalOnProperty(value = "metrics.s3.health.enabled", havingValue = "true", matchIfMissing = true)
     public void s3HealthPing() {
         long start = System.nanoTime();
@@ -65,22 +83,12 @@ public class MetricsConfig {
             // Simple head bucket call to check connectivity and permissions
             s3Client.headBucket(builder -> builder.bucket(awsProperties.getS3().getBucketName()));
 
-            // Record successful health check
-            Timer.builder("dep.s3.check.latency")
-                    .tag("result", "up")
-                    .register(registry)
-                    .record(System.nanoTime() - start, TimeUnit.NANOSECONDS);
+            // Record successful health check using pre-registered timer
+            s3HealthUpTimer.record(System.nanoTime() - start, TimeUnit.NANOSECONDS);
         } catch (RuntimeException e) {
-            // Record failed health check with error type
-            Timer.builder("dep.s3.check.latency")
-                    .tag("result", "down")
-                    .register(registry)
-                    .record(System.nanoTime() - start, TimeUnit.NANOSECONDS);
-
-            Counter.builder("dep.s3.check.errors")
-                    .tag("error", e.getClass().getSimpleName())
-                    .register(registry)
-                    .increment();
+            // Record failed health check using pre-registered timer
+            s3HealthDownTimer.record(System.nanoTime() - start, TimeUnit.NANOSECONDS);
+            s3HealthErrorCounter.increment();
         }
     }
 }
