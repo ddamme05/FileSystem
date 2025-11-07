@@ -11,6 +11,7 @@ import {UploadPanel} from '@/components/files/UploadPanel';
 import {LoginPage} from '@/pages/LoginPage';
 import {RegisterPage} from '@/pages/RegisterPage';
 import {FilesPage} from '@/pages/FilesPage';
+import {SearchPage} from '@/pages/SearchPage';
 
 const queryClient = new QueryClient({
     defaultOptions: {
@@ -38,6 +39,16 @@ export function App() {
                                         <AuthGuard>
                                             <AppShell>
                                                 <FilesPage/>
+                                            </AppShell>
+                                        </AuthGuard>
+                                    }
+                                />
+                                <Route
+                                    path="/search"
+                                    element={
+                                        <AuthGuard>
+                                            <AppShell>
+                                                <SearchPage/>
                                             </AppShell>
                                         </AuthGuard>
                                     }
