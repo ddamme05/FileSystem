@@ -60,3 +60,18 @@ management:
     distribution:
       percentiles-histogram:
         http.server.requests: true
+
+# Quieter prod logs - reduce AWS SDK and PDF processing noise
+logging:
+  level:
+    root: INFO
+    org.ddamme: INFO
+    # Reduce AWS SDK noise
+    software.amazon.awssdk: INFO
+    # Reduce PDF processing noise
+    org.apache.pdfbox: WARN
+    # Reduce OCR noise
+    net.sourceforge.tess4j: INFO
+    # Keep Spring at INFO level
+    org.springframework: INFO
+    org.hibernate: INFO
