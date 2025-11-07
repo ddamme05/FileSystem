@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.ddamme.dto.ErrorResponse;
 import org.ddamme.exception.AccessDeniedException;
 import org.ddamme.exception.DuplicateResourceException;
+import org.ddamme.exception.InvalidRequestException;
 import org.ddamme.exception.ResourceNotFoundException;
 import org.ddamme.exception.StorageOperationException;
 import org.ddamme.metrics.Metrics;
@@ -197,5 +198,20 @@ public class GlobalExceptionHandler {
                 "Payload Too Large",
                 "File too large. Max 10MB allowed.",
                 request.getDescription(false));
+    }
+
+    @ExceptionHandler(InvalidRequestException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidRequestException(
+            InvalidRequestException ex, WebRequest request) {
+
+        recordError(400, ex);
+        ErrorResponse errorResponse =
+                new ErrorResponse(
+                        Instant.now(),
+                        HttpStatus.BAD_REQUEST.value(),
+                        "Invalid Request",
+                        ex.getMessage(),
+                        request.getDescription(false));
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 }
