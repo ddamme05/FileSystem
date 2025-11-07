@@ -11,6 +11,7 @@ import org.ddamme.util.FileUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.core.sync.ResponseTransformer;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
@@ -21,6 +22,7 @@ import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignReques
 import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequest;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.util.UUID;
 
@@ -199,4 +201,28 @@ public class S3StorageService implements StorageService {
             throw e;
         }
     }
+
+    @Override
+    @Observed(name = "s3.download.to.file")
+    public void downloadToFile(String storageKey, Path destination) throws IOException {
+        Timer.Sample sample = Timer.start(meterRegistry);
+
+        try {
+            String bucketName = awsProperties.getS3().getBucketName();
+
+            GetObjectRequest getObjectRequest = GetObjectRequest.builder()
+                    .bucket(bucketName)
+                    .key(storageKey)
+                    .build();
+
+            s3Client.getObject(getObjectRequest,
+                    ResponseTransformer.toFile(destination));
+            sample.stop(Metrics.timer(meterRegistry, "s3.op.latency", "op", "download_to_file", "result", "success"));
+        } catch (RuntimeException e) {
+            sample.stop(Metrics.timer(meterRegistry, "s3.op.latency", "op", "download_to_file", "result", "failure"));
+            Metrics.increment(meterRegistry, "s3.op.errors", "op", "download_to_file", "error", e.getClass().getSimpleName());
+            throw new StorageOperationException("Failed to download file: " + storageKey, e);
+        }
+    }
 }
+

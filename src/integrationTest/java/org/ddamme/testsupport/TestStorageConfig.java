@@ -7,8 +7,11 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -74,5 +77,17 @@ public class TestStorageConfig {
         public void delete(String storageKey) {
             keys.remove(storageKey);
         }
+
+        @Override
+        public void downloadToFile(String storageKey, Path destination) throws IOException {
+            // Stub implementation for tests - creates an empty file
+            // Real tests needing file content should mock StorageService instead
+            if (!keys.contains(storageKey)) {
+                throw new StorageOperationException("Unknown storage key: " + storageKey);
+            }
+            Files.createDirectories(destination.getParent());
+            Files.write(destination, new byte[0]);
+        }
     }
 }
+
