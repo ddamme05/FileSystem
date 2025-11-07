@@ -41,7 +41,7 @@ public class MetadataServiceImpl implements MetadataService {
     public FileMetadata findOwnedById(User owner, Long id) {
         // Single-query ownership check - cleaner and faster than load-then-check
         return metadataRepository
-                .findByIdAndUserId(id, owner.getId())
+                .findByIdAndUser_Id(id, owner.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("FileMetadata", "id", id));
     }
 
@@ -65,3 +65,4 @@ public class MetadataServiceImpl implements MetadataService {
         return metadataRepository.findByUserIdOrderByUploadTimestampDesc(user.getId(), pageable);
     }
 }
+
