@@ -51,7 +51,7 @@ services:
     init: true
     environment:
       # Datadog
-      JAVA_TOOL_OPTIONS: "-javaagent:/app/dd-java-agent.jar ${JAVA_TOOL_OPTIONS:-} -XX:MaxRAMPercentage=75.0"
+      JAVA_TOOL_OPTIONS: "-javaagent:/app/dd-java-agent.jar -XX:MaxRAMPercentage=75.0 -XX:+UseSerialGC"
       DD_AGENT_HOST: datadog
       DD_SERVICE: file-system-app
       DD_ENV: dev
