@@ -2,3 +2,16 @@
 # AWS region required for AwsProperties validation (actual S3 config comes from LocalStackS3TestConfig)
 aws:
   region: us-east-1
+
+# Disable AI worker and scheduler during integration tests
+ai:
+  worker:
+    enabled: false
+  scheduler:
+    enabled: false
+
+# Disable Spring task scheduling to prevent @Scheduled methods from running
+spring:
+  task:
+    scheduling:
+      enabled: false
