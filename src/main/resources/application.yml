@@ -13,10 +13,16 @@ spring:
     username: ${SPRING_DATASOURCE_USERNAME:user}
     password: ${SPRING_DATASOURCE_PASSWORD:password}
     driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 5000
+      idle-timeout: 300000
+      max-lifetime: 600000
 
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: none  # Flyway owns DDL - Hibernate only validates
     open-in-view: false
     show-sql: false
     properties:
@@ -28,6 +34,7 @@ spring:
     enabled: true
     baseline-on-migrate: true
     clean-disabled: true
+    out-of-order: true
 
 server:
   port: ${SERVER_PORT:8080}
@@ -91,6 +98,14 @@ security:
       - http://127.0.0.1:3000
       - http://localhost:5173
       - http://127.0.0.1:5173
+    allowed-methods:
+      - GET
+      - POST
+      - PUT
+      - PATCH
+      - DELETE
+      - OPTIONS
+      - HEAD
     allowed-headers:
       - Authorization
       - Content-Type
@@ -100,7 +115,38 @@ security:
       - X-Request-ID
       - Content-Disposition
       - Location
+      - X-Has-Text
+      - X-Text-Length
+      - ETag
+    allow-credentials: true
 
 logging:
   level:
-    software.amazon.awssdk: DEBUG
+    software.amazon.awssdk: INFO  # Set to DEBUG locally if needed; INFO in prod to reduce noise
+    org.ddamme: INFO  # INFO in prod, override to DEBUG locally via profile
+
+# AI Worker Configuration
+ai:
+  worker:
+    enabled: ${AI_WORKER_ENABLED:true}
+    core-threads: 2  # Tuned for t3.medium (2 vCPU)
+    max-threads: 4   # 2x core for burst capacity
+    queue-capacity: 100
+    batch-size: 10
+    poll-interval: 5000  # 5 seconds
+    reclaim-interval: 60000  # 1 minute
+    stale-job-timeout: PT15M  # 15 minutes (ISO-8601 duration)
+    max-attempts: 3  # Retry failed jobs up to N times before DLQ
+    ocr:
+      max-pages: 50  # Cost control for large PDFs
+      language: eng  # Tesseract language (eng, fra, deu, spa, etc.)
+      data-path: ${TESSDATA_PREFIX:/usr/share/tesseract-ocr/4.00/tessdata}
+      auto-create: ${AI_OCR_AUTO_CREATE:true}
+      file-types:
+        - application/pdf
+        - image/*
+  ocr:
+    reconciler:
+      enabled: true  # Can backfill even when workers paused
+      cron: "0 15 * * * *"  # Every hour at :15
+      lookback-days: 30  # Only backfill files from last N days
