@@ -25,7 +25,7 @@ dependencies {
 
     runtimeOnly("io.jsonwebtoken:jjwt-impl:0.12.6")
     runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.12.6")
-    runtimeOnly("org.postgresql:postgresql")
+    implementation("org.postgresql:postgresql")
 
     compileOnly("org.projectlombok:lombok")
 
@@ -46,6 +46,12 @@ dependencies {
     implementation("com.bucket4j:bucket4j-core:8.10.1")
     implementation("com.github.ben-manes.caffeine:caffeine:3.2.2")
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.13")
+
+    // OCR and PDF processing
+    implementation("net.sourceforge.tess4j:tess4j:5.16.0")
+    implementation("org.apache.pdfbox:pdfbox:3.0.6")
+    implementation("net.java.dev.jna:jna:5.18.1")
+
     annotationProcessor("org.projectlombok:lombok")
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
