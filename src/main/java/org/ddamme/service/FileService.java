@@ -2,29 +2,49 @@ package org.ddamme.service;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.ddamme.database.model.FileMetadata;
+import org.ddamme.database.model.JobType;
 import org.ddamme.database.model.User;
 import org.ddamme.metrics.Metrics;
+import org.ddamme.service.ai.AiJobService;
 import org.ddamme.util.FileUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.unit.DataSize;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.UUID;
 
 @Service
-@RequiredArgsConstructor
 @Transactional
+@Slf4j
 public class FileService {
     private final StorageService storageService;
     private final MetadataService metadataService;
     private final MeterRegistry meterRegistry;
+    private final AiJobService aiJobService;
+
     @Value("${spring.servlet.multipart.max-file-size}")
     private DataSize maxFileSize;
     @Value("${spring.profiles.active:dev}")
     private String activeProfile;
+    @Value("${ai.worker.ocr.auto-create:true}")
+    private boolean ocrAutoCreate;
+
+    public FileService(StorageService storageService,
+                       MetadataService metadataService,
+                       MeterRegistry meterRegistry,
+                       AiJobService aiJobService) {
+        this.storageService = storageService;
+        this.metadataService = metadataService;
+        this.meterRegistry = meterRegistry;
+        this.aiJobService = aiJobService;
+    }
 
     public FileMetadata upload(User user, MultipartFile file) {
         long start = System.nanoTime();
@@ -62,7 +82,39 @@ public class FileService {
             // metrics - track upload success with content family
             Metrics.uploadBytes(meterRegistry).record(file.getSize());
             Metrics.increment(meterRegistry, "fs.upload.count", "result", "success", "content_family", contentFamily);
-            return metadataService.save(meta);
+
+            FileMetadata savedMetadata = metadataService.save(meta);
+
+            // Automatically create OCR job for PDFs and images (if enabled and AI service is available)
+            log.debug("Job creation check: ocrAutoCreate={}, aiJobService={}, contentType={}, shouldOcr={}",
+                    ocrAutoCreate, aiJobService != null, contentType, shouldOcr(contentType));
+
+            if (ocrAutoCreate && aiJobService != null && shouldOcr(contentType)) {
+                // Schedule job creation after commit so file_metadata row is visible to REQUIRES_NEW transaction
+                final Long userId = user.getId();
+                final Long fileId = savedMetadata.getId();
+                final String filename = originalName;
+
+                TransactionSynchronizationManager.registerSynchronization(
+                    new TransactionSynchronization() {
+                        @Override
+                        public void afterCommit() {
+                            try {
+                                aiJobService.createJob(userId, fileId, JobType.OCR, 5, null);
+                                log.info("Created OCR job for file {}: {}", fileId, filename);
+                            } catch (Exception e) {
+                                // Log error but don't propagate - upload should succeed even if job creation fails
+                                log.error("Post-commit OCR job creation failed for file {}: {}",
+                                        fileId, e.getMessage(), e);
+                            }
+                        }
+                    });
+            } else {
+                log.warn("Skipping OCR job creation for file {}: ocrAutoCreate={}, aiJobService={}, shouldOcr={}",
+                        originalName, ocrAutoCreate, aiJobService != null, shouldOcr(contentType));
+            }
+
+            return savedMetadata;
         } catch (RuntimeException e) {
             result = "failure";
             Metrics.increment(meterRegistry, "fs.upload.count", "result", "failure", "content_family", contentFamily);
@@ -111,5 +163,11 @@ public class FileService {
             Metrics.increment(meterRegistry, "fs.delete.count", "result", "failure");
             throw e;
         }
+    }
+
+    private boolean shouldOcr(String contentType) {
+        // Determine if the file type requires OCR processing
+        return contentType.equals("application/pdf") ||
+                contentType.startsWith("image/");
     }
 }
