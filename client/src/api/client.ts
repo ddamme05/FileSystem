@@ -143,6 +143,14 @@ export async function apiRequest<T>(endpoint: string, options?: RequestInit): Pr
 
 export const api = {
     get: <T>(url: string) => apiRequest<T>(url, {method: 'GET'}),
+    head: (url: string) => fetch(url, {
+        method: 'HEAD',
+        headers: {
+            ...(localStorage.getItem('auth_token') && {
+                Authorization: `Bearer ${localStorage.getItem('auth_token')}`
+            }),
+        },
+    }),
     post: <T>(url: string, data?: unknown) =>
         apiRequest<T>(url, {
             method: 'POST',
