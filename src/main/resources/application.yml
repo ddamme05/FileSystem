@@ -140,7 +140,7 @@ ai:
     ocr:
       max-pages: 50  # Cost control for large PDFs
       language: eng  # Tesseract language (eng, fra, deu, spa, etc.)
-      data-path: ${TESSDATA_PREFIX:/usr/share/tesseract-ocr/4.00/tessdata}
+      data-path: ${TESSDATA_PREFIX:/usr/share/tesseract-ocr/5/tessdata}
       auto-create: ${AI_OCR_AUTO_CREATE:true}
       file-types:
         - application/pdf
