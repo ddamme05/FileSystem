@@ -13,9 +13,9 @@ import org.ddamme.testsupport.BaseIntegrationTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -27,7 +27,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -43,7 +43,6 @@ import static org.assertj.core.api.Assertions.assertThat;
  * - Concurrent worker safety (SKIP LOCKED prevents double-claiming)
  */
 @SpringBootTest
-@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class AiJobClaimIntegrationTest extends BaseIntegrationTest {
 
     @Autowired
@@ -64,14 +63,15 @@ class AiJobClaimIntegrationTest extends BaseIntegrationTest {
     @BeforeEach
     void setUp() {
         // Clean slate - delete in correct order
+        // Spring Data methods already open/commit their own transactions
         jobRepository.deleteAll();
         metadataRepository.deleteAll();
         userRepository.deleteAll();
 
-        // Create test user and file
+        // Create test user with unique username to avoid conflicts
         testUser = new User();
-        testUser.setUsername("test-worker");
-        testUser.setEmail("worker@test.com");
+        testUser.setUsername("test-worker-" + System.nanoTime());
+        testUser.setEmail("worker-" + System.nanoTime() + "@test.com");
         testUser.setPassword("hashed");
         testUser.setRole(Role.USER);
         testUser = userRepository.save(testUser);
@@ -108,7 +108,7 @@ class AiJobClaimIntegrationTest extends BaseIntegrationTest {
 
     @Test
     @DisplayName("Should NOT claim job when next_attempt_at is in the future")
-    void shouldNotClaimDeferredJob() {
+    void shouldNotClaimJobWithFutureNextAttemptAt() {
         // Given: Job deferred to 5 minutes from now
         Instant futureTime = Instant.now().plus(5, ChronoUnit.MINUTES);
         AiJob job = createJob(JobType.OCR, futureTime);
@@ -129,9 +129,9 @@ class AiJobClaimIntegrationTest extends BaseIntegrationTest {
 
     @Test
     @DisplayName("Should claim deferred job after time passes")
-    void shouldClaimDeferredJobAfterTime() {
-        // Given: Job deferred to 1 second ago (now claimable)
-        Instant pastTime = Instant.now().minus(1, ChronoUnit.SECONDS);
+    void shouldClaimDeferredJobWhenTimeArrives() {
+        // Given: Job deferred to 2 seconds ago (now claimable, generous cushion for CI)
+        Instant pastTime = Instant.now().minus(2, ChronoUnit.SECONDS);
         AiJob job = createJob(JobType.OCR, pastTime);
         job = jobRepository.save(job);
 
@@ -172,7 +172,7 @@ class AiJobClaimIntegrationTest extends BaseIntegrationTest {
 
     @Test
     @DisplayName("Should claim job after dependency completes")
-    void shouldClaimJobAfterDependencyCompletes() {
+    void shouldClaimJobWhenDependencyCompletes() {
         // Given: Parent job DONE
         AiJob parentJob = createJob(JobType.OCR, null);
         parentJob.setJobStatus(JobStatus.DONE);
@@ -196,7 +196,7 @@ class AiJobClaimIntegrationTest extends BaseIntegrationTest {
 
     @Test
     @DisplayName("Should increment attempts counter on each claim")
-    void shouldIncrementAttemptsOnEachClaim() {
+    void shouldIncrementAttemptsOnClaim() {
         // Given: Job that will be claimed multiple times
         AiJob job = createJob(JobType.OCR, null);
         job = jobRepository.save(job);
@@ -235,6 +235,7 @@ class AiJobClaimIntegrationTest extends BaseIntegrationTest {
     }
 
     @Test
+    @Timeout(15) // Generous timeout for CI runners
     @DisplayName("Should prevent double-claiming with concurrent workers (SKIP LOCKED)")
     void shouldPreventDoubleClaiming() throws InterruptedException {
         // Given: 5 jobs ready to claim (each with unique file to avoid constraint violation)
@@ -263,70 +264,79 @@ class AiJobClaimIntegrationTest extends BaseIntegrationTest {
 
         // And: 2 concurrent workers with separate transaction templates
         ExecutorService executor = Executors.newFixedThreadPool(2);
-        CountDownLatch startLatch = new CountDownLatch(1);
-        CountDownLatch doneLatch = new CountDownLatch(2);
-        AtomicInteger worker1Claims = new AtomicInteger(0);
-        AtomicInteger worker2Claims = new AtomicInteger(0);
+        try {
+            CountDownLatch startLatch = new CountDownLatch(1);
+            CountDownLatch doneLatch = new CountDownLatch(2);
+            AtomicReference<List<Long>> worker1JobIdsRef = new AtomicReference<>();
+            AtomicReference<List<Long>> worker2JobIdsRef = new AtomicReference<>();
 
-        // Create transaction templates with REQUIRES_NEW to ensure separate transactions
-        TransactionTemplate txTemplate1 = new TransactionTemplate(transactionManager);
-        txTemplate1.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+            // Create transaction templates with REQUIRES_NEW to ensure separate transactions
+            TransactionTemplate txTemplate1 = new TransactionTemplate(transactionManager);
+            txTemplate1.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
 
-        TransactionTemplate txTemplate2 = new TransactionTemplate(transactionManager);
-        txTemplate2.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+            TransactionTemplate txTemplate2 = new TransactionTemplate(transactionManager);
+            txTemplate2.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
 
-        // When: Both workers claim simultaneously in separate transactions
-        executor.submit(() -> {
-            try {
-                startLatch.await(); // Wait for go signal
-                Integer claimed = txTemplate1.execute(status -> {
-                    List<Long> jobIds = jobRepository.claimJobIds(10, "worker-1");
-                    return jobIds.size();
-                });
-                worker1Claims.set(claimed != null ? claimed : 0);
-            } catch (Exception e) {
-                e.printStackTrace();
-            } finally {
-                doneLatch.countDown();
-            }
-        });
+            // When: Both workers claim simultaneously in separate transactions
+            executor.submit(() -> {
+                try {
+                    startLatch.await(); // Wait for go signal
+                    List<Long> claimedJobIds = txTemplate1.execute(status ->
+                        jobRepository.claimJobIds(10, "worker-1")
+                    );
+                    worker1JobIdsRef.set(claimedJobIds);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                } finally {
+                    doneLatch.countDown();
+                }
+            });
 
-        executor.submit(() -> {
-            try {
-                startLatch.await(); // Wait for go signal
-                Integer claimed = txTemplate2.execute(status -> {
-                    List<Long> jobIds = jobRepository.claimJobIds(10, "worker-2");
-                    return jobIds.size();
-                });
-                worker2Claims.set(claimed != null ? claimed : 0);
-            } catch (Exception e) {
-                e.printStackTrace();
-            } finally {
-                doneLatch.countDown();
-            }
-        });
+            executor.submit(() -> {
+                try {
+                    startLatch.await(); // Wait for go signal
+                    List<Long> claimedJobIds = txTemplate2.execute(status ->
+                        jobRepository.claimJobIds(10, "worker-2")
+                    );
+                    worker2JobIdsRef.set(claimedJobIds);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                } finally {
+                    doneLatch.countDown();
+                }
+            });
 
-        startLatch.countDown(); // Start both workers
-        boolean finished = doneLatch.await(5, TimeUnit.SECONDS);
-        executor.shutdown();
+            startLatch.countDown(); // Start both workers
+            boolean finished = doneLatch.await(10, TimeUnit.SECONDS);
+            assertThat(finished).as("Both workers should complete within timeout").isTrue();
 
-        // Then: All jobs claimed exactly once (no double-claiming)
-        assertThat(finished).isTrue();
-        int totalClaimed = worker1Claims.get() + worker2Claims.get();
-        assertThat(totalClaimed).isEqualTo(5);
+            // Then: Verify claimed job IDs have no overlap (proves SKIP LOCKED works)
+            List<Long> worker1JobIds = worker1JobIdsRef.get();
+            List<Long> worker2JobIds = worker2JobIdsRef.get();
 
-        // Verify all jobs are RUNNING with correct lock
-        List<AiJob> allJobs = jobRepository.findAll();
-        assertThat(allJobs).hasSize(5);
-        assertThat(allJobs).allMatch(j -> j.getJobStatus() == JobStatus.RUNNING);
-        assertThat(allJobs).allMatch(j -> j.getLockedBy() != null);
-        assertThat(allJobs).allMatch(j -> j.getLockedAt() != null);
-        assertThat(allJobs).allMatch(j -> j.getAttempts() == 1);
+            assertThat(worker1JobIds).isNotNull();
+            assertThat(worker2JobIds).isNotNull();
+            assertThat(worker1JobIds).doesNotContainAnyElementsOf(worker2JobIds)
+                .as("Workers should claim different jobs (no double-claiming)");
 
-        // Verify workers claimed different jobs (no overlap)
-        long worker1Jobs = allJobs.stream().filter(j -> "worker-1".equals(j.getLockedBy())).count();
-        long worker2Jobs = allJobs.stream().filter(j -> "worker-2".equals(j.getLockedBy())).count();
-        assertThat(worker1Jobs + worker2Jobs).isEqualTo(5);
+            int totalClaimed = worker1JobIds.size() + worker2JobIds.size();
+            assertThat(totalClaimed).isEqualTo(5)
+                .as("All 5 jobs should be claimed exactly once");
+
+            // Verify all jobs are RUNNING with correct lock
+            List<AiJob> allJobs = jobRepository.findAll();
+            assertThat(allJobs).hasSize(5);
+            assertThat(allJobs).allMatch(job -> job.getJobStatus() == JobStatus.RUNNING);
+            assertThat(allJobs).allMatch(job -> job.getLockedBy() != null);
+            assertThat(allJobs).allMatch(job -> job.getLockedAt() != null);
+            assertThat(allJobs).allMatch(job -> job.getAttempts() == 1);
+
+            // Verify all lockedBy values are either worker-1 or worker-2
+            assertThat(allJobs).extracting(AiJob::getLockedBy)
+                .allMatch(workerId -> "worker-1".equals(workerId) || "worker-2".equals(workerId));
+        } finally {
+            executor.shutdownNow(); // Ensure cleanup even if test fails
+        }
     }
 
     @Test
