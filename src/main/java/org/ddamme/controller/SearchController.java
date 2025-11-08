@@ -89,8 +89,6 @@ public class SearchController {
      * GET /api/v1/search/text/paginated?q=machine+learning&limit=20&lastRank=0.5&lastId=123
      * Response: { results: [...], nextRank: 0.3, nextId: 456, hasMore: false, count: 15 }
      * </pre>
-     * 
-     * See: cursor_v2_rationale.md Section "Keyset Pagination" for rationale
      */
     @GetMapping("/text/paginated")
     public ResponseEntity<SearchResponse> searchTextPaginated(
@@ -138,9 +136,6 @@ public class SearchController {
      * - Show "Text available" badge without fetching full text
      * - Decide whether to offer preview/search highlighting
      * - Implement conditional requests with If-None-Match
-     * 
-     * See: docs/SUPPLIER_PATTERN.md for supplier pattern used in metrics
-     * See: cursor_v2_rationale.md Section "HEAD Endpoint" for rationale
      */
     @RequestMapping(
             path = "/files/{fileId}/text",

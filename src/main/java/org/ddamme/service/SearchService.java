@@ -54,7 +54,7 @@ public class SearchService {
             String filename = (String) r[1];
             String contentType = (String) r[2];
             Long size = ((Number) r[3]).longValue();
-            Instant uploadedAt = ((Timestamp) r[4]).toInstant();
+            Instant uploadedAt = convertToInstant(r[4]);
             Double rank = ((Number) r[5]).doubleValue();
             String snippet = (String) r[6];
             Float ocrConfidence = r[7] != null ? ((Number) r[7]).floatValue() : null;
@@ -141,7 +141,7 @@ public class SearchService {
             String filename = (String) r[1];
             String contentType = (String) r[2];
             Long size = ((Number) r[3]).longValue();
-            Instant uploadedAt = (Instant) r[4];
+            Instant uploadedAt = convertToInstant(r[4]);
             Double rank = ((Number) r[5]).doubleValue();
             String snippet = (String) r[6];
             Float ocrConfidence = r[7] != null ? ((Number) r[7]).floatValue() : null;
@@ -190,5 +190,25 @@ public class SearchService {
         return metadataRepository.findById(fileId)
                 .map(m -> m.getFileText() != null && !m.getFileText().isBlank())
                 .orElse(false);
+    }
+
+    /**
+     * Convert JDBC timestamp result to Instant.
+     * Handles Timestamp, LocalDateTime, and Instant types.
+     */
+    private Instant convertToInstant(Object timestamp) {
+        if (timestamp == null) {
+            return null;
+        }
+        if (timestamp instanceof Instant instant) {
+            return instant;
+        }
+        if (timestamp instanceof Timestamp ts) {
+            return ts.toInstant();
+        }
+        if (timestamp instanceof java.time.LocalDateTime ldt) {
+            return ldt.atZone(java.time.ZoneId.systemDefault()).toInstant();
+        }
+        throw new IllegalArgumentException("Unexpected timestamp type: " + timestamp.getClass().getName());
     }
 }
