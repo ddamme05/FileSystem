@@ -16,6 +16,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -51,6 +54,9 @@ class AiJobClaimIntegrationTest extends BaseIntegrationTest {
 
     @Autowired
     private MetadataRepository metadataRepository;
+
+    @Autowired
+    private PlatformTransactionManager transactionManager;
 
     private User testUser;
     private FileMetadata testFile;
@@ -255,19 +261,29 @@ class AiJobClaimIntegrationTest extends BaseIntegrationTest {
             jobRepository.save(job);
         }
 
-        // And: 2 concurrent workers
+        // And: 2 concurrent workers with separate transaction templates
         ExecutorService executor = Executors.newFixedThreadPool(2);
         CountDownLatch startLatch = new CountDownLatch(1);
         CountDownLatch doneLatch = new CountDownLatch(2);
         AtomicInteger worker1Claims = new AtomicInteger(0);
         AtomicInteger worker2Claims = new AtomicInteger(0);
 
-        // When: Both workers claim simultaneously
+        // Create transaction templates with REQUIRES_NEW to ensure separate transactions
+        TransactionTemplate txTemplate1 = new TransactionTemplate(transactionManager);
+        txTemplate1.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+
+        TransactionTemplate txTemplate2 = new TransactionTemplate(transactionManager);
+        txTemplate2.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+
+        // When: Both workers claim simultaneously in separate transactions
         executor.submit(() -> {
             try {
                 startLatch.await(); // Wait for go signal
-                List<Long> claimed = jobRepository.claimJobIds(10, "worker-1");
-                worker1Claims.set(claimed.size());
+                Integer claimed = txTemplate1.execute(status -> {
+                    List<Long> jobIds = jobRepository.claimJobIds(10, "worker-1");
+                    return jobIds.size();
+                });
+                worker1Claims.set(claimed != null ? claimed : 0);
             } catch (Exception e) {
                 e.printStackTrace();
             } finally {
@@ -278,8 +294,11 @@ class AiJobClaimIntegrationTest extends BaseIntegrationTest {
         executor.submit(() -> {
             try {
                 startLatch.await(); // Wait for go signal
-                List<Long> claimed = jobRepository.claimJobIds(10, "worker-2");
-                worker2Claims.set(claimed.size());
+                Integer claimed = txTemplate2.execute(status -> {
+                    List<Long> jobIds = jobRepository.claimJobIds(10, "worker-2");
+                    return jobIds.size();
+                });
+                worker2Claims.set(claimed != null ? claimed : 0);
             } catch (Exception e) {
                 e.printStackTrace();
             } finally {
