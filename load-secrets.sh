@@ -36,20 +36,14 @@ fi
 # Note: AWS credentials now come from EC2 instance role via IMDSv2
 # AWS_REGION and AWS_S3_BUCKET are set as environment variables in docker-compose.yml
 
-# Create a temp directory for JNA (needed for Tesseract/JNA native library loading)
-# This avoids issues with /tmp being mounted noexec
-# Use /var/tmp which is typically not noexec and world-writable
-mkdir -p /var/tmp/jna 2>/dev/null || true
-chmod 1777 /var/tmp/jna 2>/dev/null || true
-
 # Drop privileges and start Java app
 # Ubuntu Jammy uses gosu (installed in Dockerfile)
-# Set jna.tmpdir to avoid /tmp noexec issues with native libraries
+# JNA temp directory is now set via JAVA_TOOL_OPTIONS in docker-compose.yml
 if command -v gosu >/dev/null 2>&1; then
-  exec gosu appuser java -Djna.tmpdir=/var/tmp/jna -jar /app/app.jar "$@"
+  exec gosu appuser java -jar /app/app.jar "$@"
 elif command -v runuser >/dev/null 2>&1; then
-  exec runuser -u appuser -- java -Djna.tmpdir=/var/tmp/jna -jar /app/app.jar "$@"
+  exec runuser -u appuser -- java -jar /app/app.jar "$@"
 else
-  exec su -s /bin/sh -c 'exec java -Djna.tmpdir=/var/tmp/jna -jar /app/app.jar "$@"' appuser -- "$@"
+  exec su -s /bin/sh -c 'exec java -jar /app/app.jar "$@"' appuser -- "$@"
 fi
 

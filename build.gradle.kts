@@ -48,7 +48,9 @@ dependencies {
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.13")
 
     // OCR and PDF processing
-    implementation("net.sourceforge.tess4j:tess4j:5.16.0")
+    // Using tess4j 5.9.0 which is compatible with Leptonica 1.82.0 (Ubuntu 22.04 default)
+    // Newer versions (5.10.0+) require Leptonica 1.84.0+ which isn't available in Ubuntu repos
+    implementation("net.sourceforge.tess4j:tess4j:5.9.0")
     implementation("org.apache.pdfbox:pdfbox:3.0.6")
     implementation("net.java.dev.jna:jna:5.18.1")
 
