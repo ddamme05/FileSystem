@@ -52,6 +52,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Verify Tesseract installation and detect tessdata directory
 # Using tess4j 5.9.0 which is compatible with Ubuntu 22.04's Leptonica 1.82.0
 # Tesseract 5.x from PPA uses /usr/share/tesseract-ocr/5/tessdata
+# NOTE: Detection runs at BUILD TIME and writes result for RUNTIME use
 RUN set -eux; \
     echo "=== Tesseract version ==="; \
     tesseract --version 2>&1 | head -3; \
@@ -59,13 +60,13 @@ RUN set -eux; \
     echo "=== Installed Leptonica version ==="; \
     dpkg -l | grep leptonica || true; \
     echo ""; \
-    echo "=== Checking for tessdata in standard locations ==="; \
+    echo "=== Detecting tessdata directory ==="; \
     if [ -f "/usr/share/tesseract-ocr/5/tessdata/eng.traineddata" ]; then \
-      actualTessdataDirectory="/usr/share/tesseract-ocr/5/tessdata"; \
+      detectedTessdataDirectory="/usr/share/tesseract-ocr/5/tessdata"; \
     elif [ -f "/usr/share/tesseract-ocr/4.00/tessdata/eng.traineddata" ]; then \
-      actualTessdataDirectory="/usr/share/tesseract-ocr/4.00/tessdata"; \
+      detectedTessdataDirectory="/usr/share/tesseract-ocr/4.00/tessdata"; \
     elif [ -f "/usr/share/tessdata/eng.traineddata" ]; then \
-      actualTessdataDirectory="/usr/share/tessdata"; \
+      detectedTessdataDirectory="/usr/share/tessdata"; \
     else \
       echo "ERROR: eng.traineddata not found in any standard location"; \
       echo "Searched paths:"; \
@@ -73,13 +74,18 @@ RUN set -eux; \
       ls -la /usr/share/tessdata/ 2>/dev/null || true; \
       exit 1; \
     fi; \
-    echo "✓ Found tessdata directory: $actualTessdataDirectory"; \
-    ls -l "$actualTessdataDirectory/eng.traineddata"; \
+    echo "✓ Found tessdata directory: $detectedTessdataDirectory"; \
+    ls -l "$detectedTessdataDirectory/eng.traineddata"; \
+    echo ""; \
+    echo "=== Persisting detected path for runtime ==="; \
+    mkdir -p /etc/profile.d; \
+    echo "export TESSDATA_PREFIX=$detectedTessdataDirectory" > /etc/profile.d/tessdata.sh; \
+    chmod 644 /etc/profile.d/tessdata.sh; \
     echo ""; \
     echo "=== Configuration Summary ==="; \
     echo "Tesseract: $(tesseract --version 2>&1 | head -1)"; \
     echo "Leptonica: $(dpkg -l | grep libleptonica | awk '{print $3}')"; \
-    echo "Tessdata: $actualTessdataDirectory"; \
+    echo "Tessdata: $detectedTessdataDirectory"; \
     echo "Using tess4j 5.9.0 (compatible with Leptonica 1.82.0)"
 
 # Copy the boot JAR from build stage
@@ -102,11 +108,13 @@ RUN set -eux; \
 # Environment variables for Tesseract
 # Tesseract 5.x from alex-p PPA uses /usr/share/tesseract-ocr/5/tessdata
 # Tess4J expects the directory that contains *.traineddata files
+# NOTE: docker-compose.yml can override this if needed
 ENV OMP_THREAD_LIMIT=1
 ENV TESSDATA_PREFIX=/usr/share/tesseract-ocr/5/tessdata
 
 # Free-tier friendly memory settings (prevents OOM on t3.micro/small)
-ENV JAVA_TOOL_OPTIONS="-javaagent:/app/dd-java-agent.jar -XX:MaxRAMPercentage=75.0 -XX:+UseSerialGC -Djava.io.tmpdir=/tmp -Djna.tmpdir=/tmp"
+# -Djna.nosys=false ensures JNA uses tmpdir even in read-only filesystem (critical for standalone runs)
+ENV JAVA_TOOL_OPTIONS="-javaagent:/app/dd-java-agent.jar -XX:MaxRAMPercentage=75.0 -XX:+UseSerialGC -Djava.io.tmpdir=/tmp -Djna.tmpdir=/tmp -Djna.nosys=false"
 ENV HOME=/tmp
 
 EXPOSE 8080

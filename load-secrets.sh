@@ -36,6 +36,15 @@ fi
 # Note: AWS credentials now come from EC2 instance role via IMDSv2
 # AWS_REGION and AWS_S3_BUCKET are set as environment variables in docker-compose.yml
 
+# Source the detected tessdata path (set during Docker build)
+# This ensures TESSDATA_PREFIX matches the actual Tesseract version installed
+if [ -f /etc/profile.d/tessdata.sh ]; then
+  . /etc/profile.d/tessdata.sh
+  echo "Loaded TESSDATA_PREFIX from detection: ${TESSDATA_PREFIX}"
+else
+  echo "Warning: /etc/profile.d/tessdata.sh not found, using default TESSDATA_PREFIX"
+fi
+
 # Drop privileges and start Java app
 # Ubuntu Jammy uses gosu (installed in Dockerfile)
 # JNA temp directory is now set via JAVA_TOOL_OPTIONS in docker-compose.yml
