@@ -95,7 +95,7 @@ public class SearchService {
                 "filename", metadata.getOriginalFilename(),
                 "text", metadata.getFileText() != null ? metadata.getFileText() : "",
                 "ocrConfidence", metadata.getOcrConfidence() != null ? metadata.getOcrConfidence() : 0,
-                "ocrModelVersion", metadata.getOcrModelVersion() != null ? metadata.getOcrModelVersion() : ""
+                "modelVersion", metadata.getOcrModelVersion() != null ? metadata.getOcrModelVersion() : ""
         );
     }
 
