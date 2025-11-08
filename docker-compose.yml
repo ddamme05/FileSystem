@@ -44,14 +44,16 @@ services:
         condition: service_healthy
     ports: [ "8080:8080" ]
     read_only: true
-    tmpfs: [ "/tmp","/var/tmp" ]
+    tmpfs:
+      - /tmp:rw,exec,nosuid,nodev,mode=1777
+      - /var/tmp:rw,exec,nosuid,nodev,mode=1777
     cap_drop: [ ALL ]
     cap_add: [ SETUID, SETGID ]
     security_opt: [ "no-new-privileges:true" ]
     init: true
     environment:
       # Datadog
-      JAVA_TOOL_OPTIONS: "-javaagent:/app/dd-java-agent.jar -XX:MaxRAMPercentage=75.0 -XX:+UseSerialGC"
+      JAVA_TOOL_OPTIONS: "-javaagent:/app/dd-java-agent.jar -XX:MaxRAMPercentage=75.0 -XX:+UseSerialGC -Djava.io.tmpdir=/tmp -Djna.tmpdir=/tmp -Djna.nosys=false"
       DD_AGENT_HOST: datadog
       DD_SERVICE: file-system-app
       DD_ENV: dev
@@ -65,6 +67,10 @@ services:
       MANAGEMENT_OTLP_METRICS_EXPORT_URL: "http://datadog:4318/v1/metrics"
       MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED: "true"
       MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: "health,info,prometheus"
+
+      # Tesseract/OCR Configuration
+      TESSDATA_PREFIX: /usr/share/tesseract-ocr/5/tessdata
+      JNA_TMPDIR: /tmp
 
       # DB
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/file_system_db

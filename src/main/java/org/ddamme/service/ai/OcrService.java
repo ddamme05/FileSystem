@@ -175,23 +175,43 @@ public class OcrService {
 
     /**
      * Create and configure Tesseract instance.
+     *
+     * Tess4J expects the directory that contains *.traineddata files directly.
+     * For Ubuntu 22.04, this is typically /usr/share/tesseract-ocr/4.00/tessdata
      */
     private Tesseract createTesseract() {
-        Tesseract tesseract = new Tesseract();
+        Tesseract tesseractInstance = new Tesseract();
 
-        // Set data path for tessdata
-        tesseract.setDatapath(properties.getOcr().getDataPath());
+        String tessdataDirectoryPath = properties.getOcr().getDataPath();
+
+        // Validate language data file exists (helps with debugging path issues)
+        String languageCode = properties.getOcr().getLanguage();
+        Path languageDataFilePath = Path.of(tessdataDirectoryPath, languageCode + ".traineddata");
+
+        if (!java.nio.file.Files.exists(languageDataFilePath)) {
+            String errorMessage = String.format(
+                "Tesseract language file not found at %s. " +
+                "Verify TESSDATA_PREFIX points to directory containing *.traineddata files " +
+                "(e.g., /usr/share/tesseract-ocr/4.00/tessdata)",
+                languageDataFilePath);
+            log.error(errorMessage);
+            throw new IllegalStateException(errorMessage);
+        }
+
+        // Pass the directory that actually contains *.traineddata files
+        tesseractInstance.setDatapath(tessdataDirectoryPath);
+        log.debug("Tesseract datapath set to: {} (language: {})", tessdataDirectoryPath, languageCode);
 
         // Set language from configuration
-        tesseract.setLanguage(properties.getOcr().getLanguage());
+        tesseractInstance.setLanguage(languageCode);
 
         // PSM 3: Fully automatic page segmentation (default)
-        tesseract.setPageSegMode(3);
+        tesseractInstance.setPageSegMode(3);
 
         // OEM 1: Neural nets LSTM engine only (best accuracy)
-        tesseract.setOcrEngineMode(1);
+        tesseractInstance.setOcrEngineMode(1);
 
-        return tesseract;
+        return tesseractInstance;
     }
 
     /**

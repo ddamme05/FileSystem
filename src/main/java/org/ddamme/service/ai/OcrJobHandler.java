@@ -54,6 +54,7 @@ public class OcrJobHandler implements JobHandler {
         "page_corrupt",       // Per-page OCR failure
         "oom_guard",          // OutOfMemoryError caught
         "s3_not_found",       // NoSuchKeyException
+        "native_library_load_failed", // UnsatisfiedLinkError (JNA/Tesseract load failure)
         "unknown"             // Catch-all for unexpected errors
     );
     
@@ -181,22 +182,32 @@ public class OcrJobHandler implements JobHandler {
      * For PDFs, first attempts native text extraction before falling back to OCR.
      */
     private OcrService.OcrResult extractText(Path file, String contentType) throws Exception {
-        if (isPdf(contentType)) {
-            // Try native text extraction first (huge CPU savings for digital PDFs)
-            OcrService.OcrResult nativeText = tryPdfTextExtraction(file);
-            if (nativeText != null) {
-                log.info("Using native PDF text extraction (skipping OCR): {} chars extracted",
-                        nativeText.text().length());
-                return nativeText;
-            }
+        try {
+            if (isPdf(contentType)) {
+                // Try native text extraction first (huge CPU savings for digital PDFs)
+                OcrService.OcrResult nativeText = tryPdfTextExtraction(file);
+                if (nativeText != null) {
+                    log.info("Using native PDF text extraction (skipping OCR): {} chars extracted",
+                            nativeText.text().length());
+                    return nativeText;
+                }
 
-            // Fall back to OCR for scanned PDFs
-            log.debug("Native text extraction insufficient, using OCR");
-            return ocrService.extractTextFromPdf(file);
-        } else if (isImage(contentType)) {
-            return ocrService.extractTextFromImage(file);
-        } else {
-            throw new IllegalArgumentException("Unsupported content type for OCR: " + contentType);
+                // Fall back to OCR for scanned PDFs
+                log.debug("Native text extraction insufficient, using OCR");
+                return ocrService.extractTextFromPdf(file);
+            } else if (isImage(contentType)) {
+                return ocrService.extractTextFromImage(file);
+            } else {
+                throw new IllegalArgumentException("Unsupported content type for OCR: " + contentType);
+            }
+        } catch (UnsatisfiedLinkError unsatisfiedLinkError) {
+            // Native library load failure (likely tmpfs noexec or missing JNA dependencies)
+            recordError("native_library_load_failed");
+            log.error("OCR native library (JNA/Tesseract/Leptonica) failed to load. " +
+                     "Check tmpfs has exec permissions, presence of libleptonica/libtesseract shared libraries, " +
+                     "and JNA temp directory is accessible.", unsatisfiedLinkError);
+            throw new RuntimeException("OCR native library failed to load: " + unsatisfiedLinkError.getMessage(),
+                                     unsatisfiedLinkError);
         }
     }
 
