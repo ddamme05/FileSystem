@@ -122,12 +122,12 @@ export function FilesPage() {
         <>
             <div className="space-y-8">
                 <section>
-                    <h2 className="text-2xl font-bold mb-4">Upload Files</h2>
+                    <h2 className="text-2xl font-bold text-ink mb-4">Upload Files</h2>
                     <UploadZone/>
                 </section>
 
                 <section>
-                    <h2 className="text-2xl font-bold mb-4">Your Files</h2>
+                    <h2 className="text-2xl font-bold text-ink mb-4">Your Files</h2>
 
                     <FileFilters
                         sortField={sortField}
@@ -139,7 +139,7 @@ export function FilesPage() {
                         onSearchChange={setSearchQuery}
                     />
 
-                    <div className="rounded-lg shadow">
+                    <div>
                         <FilesTable
                             files={filteredAndSortedFiles}
                             onPreview={(id) => setPreviewFileId(id)}

@@ -50,14 +50,14 @@ export function FileFilters({
     };
 
     return (
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-4 rounded-lg bg-white p-4 shadow">
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-4 card p-4">
             {/* Left side: Type filter + Search */}
             <div className="flex items-center gap-3">
                 <select
                     id="type-filter"
                     value={typeFilter}
                     onChange={(e) => onTypeFilterChange(e.target.value as FileTypeFilter)}
-                    className="rounded-md border border-gray-300 bg-white py-1.5 pl-3 pr-8 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="rounded-lg border border-border bg-surface py-1.5 pl-3 pr-8 text-sm text-ink focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30"
                     aria-label="Filter by file type"
                 >
                     {typeFilterOptions.map((option) => (
@@ -72,7 +72,7 @@ export function FileFilters({
                     {!isSearchExpanded ? (
                         <button
                             onClick={() => setIsSearchExpanded(true)}
-                            className="inline-flex items-center gap-1 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+                            className="inline-flex items-center gap-1 rounded-lg border border-accent bg-accent px-3 py-1.5 text-sm font-medium text-white transition hover:bg-accent-strong focus:outline-none focus:ring-2 focus:ring-accent/30"
                             aria-label="Open search"
                         >
                             <Search size={16}/>
@@ -81,13 +81,13 @@ export function FileFilters({
                     ) : (
                         <div className="flex items-center gap-2">
                             <div className="relative">
-                                <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"/>
+                                <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-faint"/>
                                 <input
                                     type="text"
                                     value={searchQuery}
                                     onChange={(e) => onSearchChange(e.target.value)}
                                     placeholder="Search files..."
-                                    className="w-64 rounded-md border border-gray-300 py-1.5 pl-10 pr-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                    className="w-64 rounded-lg border border-border bg-surface py-1.5 pl-10 pr-3 text-sm text-ink focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30"
                                     autoFocus
                                 />
                             </div>
@@ -96,7 +96,7 @@ export function FileFilters({
                                     setIsSearchExpanded(false);
                                     onSearchChange('');
                                 }}
-                                className="text-gray-400 hover:text-gray-600 transition"
+                                className="text-faint hover:text-muted transition"
                                 aria-label="Close search"
                             >
                                 <X size={18}/>
@@ -108,11 +108,11 @@ export function FileFilters({
 
             {/* Right side: Sort */}
             <div className="flex items-center gap-2">
-                <label className="text-sm font-medium text-gray-700">Sort:</label>
+                <label className="text-sm font-medium text-muted">Sort:</label>
                 <select
                     value={sortField}
                     onChange={(e) => onSortChange(e.target.value as SortField)}
-                    className="rounded-md border border-gray-300 bg-white py-1.5 pl-3 pr-8 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="rounded-lg border border-border bg-surface py-1.5 pl-3 pr-8 text-sm text-ink focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30"
                     aria-label="Sort files by"
                 >
                     {sortOptions.map((option) => (
@@ -123,7 +123,7 @@ export function FileFilters({
                 </select>
                 <button
                     onClick={toggleSortOrder}
-                    className="inline-flex items-center rounded-md border border-gray-300 bg-white p-1.5 text-gray-700 hover:bg-gray-50"
+                    className="inline-flex items-center rounded-lg border border-border bg-surface p-1.5 text-ink transition hover:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30"
                     title={`Sort order: ${sortOrder === 'asc' ? 'Ascending' : 'Descending'}`}
                     aria-label={`Toggle sort order (currently ${sortOrder === 'asc' ? 'ascending' : 'descending'})`}
                 >

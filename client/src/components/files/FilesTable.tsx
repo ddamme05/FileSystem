@@ -38,60 +38,60 @@ export function FilesTable({files, onPreview, onDownload, onDelete, onCopyLink}:
     }, [uploads]);
     if (files.length === 0) {
         return (
-            <div className="text-center py-12 text-gray-500">
+            <div className="text-center py-12 text-muted">
                 <p>No files yet. Upload your first file above!</p>
             </div>
         );
     }
 
     return (
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-            <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+        <div className="card overflow-hidden">
+            <table className="min-w-full">
+                <thead className="bg-canvas">
                 <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-faint uppercase">
                         Name
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-faint uppercase">
                         Size
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-faint uppercase">
                         Type
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-faint uppercase">
                         Uploaded
                     </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">
+                    <th className="px-6 py-3 text-right text-xs font-medium text-faint uppercase">
                         Actions
                     </th>
                 </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody>
                 {files.map((file) => {
                     const isHighlighted = highlightedIds.has(file.id);
                     return (
                         <tr
                             key={file.id}
-                            className={`hover:bg-gray-50 transition-colors duration-1000 ${
-                                isHighlighted ? 'bg-blue-50' : ''
+                            className={`border-t border-line hover:bg-canvas transition-colors duration-1000 ${
+                                isHighlighted ? 'bg-accent-weak' : ''
                             }`}
                         >
-                            <td className="px-6 py-4 text-sm font-medium text-gray-900">
+                            <td className="px-6 py-4 text-sm font-medium text-ink">
                                 <button
                                     onClick={() => onPreview(file.id)}
-                                    className="text-left hover:text-blue-600 hover:underline transition truncate max-w-xs block"
+                                    className="text-left text-ink font-medium hover:text-accent hover:underline transition truncate max-w-xs block"
                                     title={`${file.originalFilename} - Click to preview`}
                                 >
                                     {file.originalFilename}
                                 </button>
                             </td>
-                            <td className="px-6 py-4 text-sm text-gray-500">
+                            <td className="px-6 py-4 text-sm text-muted">
                                 {formatFileSize(file.size)}
                             </td>
-                            <td className="px-6 py-4 text-sm text-gray-500">
+                            <td className="px-6 py-4 text-sm text-muted">
                                 {formatFileType(file.contentType)}
                             </td>
-                            <td className="px-6 py-4 text-sm text-gray-500">
+                            <td className="px-6 py-4 text-sm text-muted">
                                 {formatRelativeTime(file.uploadTimestamp)}
                             </td>
                             <td className="px-6 py-4 text-sm text-right space-x-2">
@@ -100,7 +100,7 @@ export function FilesTable({files, onPreview, onDownload, onDelete, onCopyLink}:
                                         onClick={() => onPreview(file.id)}
                                         aria-label={`Preview ${file.originalFilename}`}
                                         title="Preview"
-                                        className="inline-flex items-center text-purple-600 hover:text-purple-800"
+                                        className="inline-flex items-center text-accent hover:text-accent-strong"
                                     >
                                         <Eye size={16}/>
                                     </button>
@@ -130,7 +130,7 @@ export function FilesTable({files, onPreview, onDownload, onDelete, onCopyLink}:
                                     onClick={() => onDelete(file.id)}
                                     aria-label={`Delete ${file.originalFilename}`}
                                     title="Delete"
-                                    className="inline-flex items-center text-red-600 hover:text-red-800"
+                                    className="inline-flex items-center text-red-500 hover:text-red-700"
                                 >
                                     <Trash2 size={16}/>
                                 </button>
