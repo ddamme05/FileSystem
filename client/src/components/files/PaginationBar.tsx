@@ -16,7 +16,7 @@ export function PaginationBar({
     const displayPage = currentPage + 1; // API is 0-based, display is 1-based
 
     return (
-        <div className="mt-3 flex items-center justify-between rounded-2xl border border-border bg-surface px-6 py-4 text-muted shadow-soft">
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-border bg-surface px-6 py-4 text-muted shadow-soft">
             <div className="flex items-center gap-2">
                 <span className="text-sm text-muted">Show</span>
                 <select

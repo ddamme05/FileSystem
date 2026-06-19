@@ -1,14 +1,21 @@
 import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { SearchBar } from '../components/search/SearchBar';
 import { SearchResults } from '../components/search/SearchResults';
 import { SearchPagination } from '../components/search/SearchPagination';
 import { TextPreviewModal } from '../components/search/TextPreviewModal';
 import { useSearch } from '../hooks/useSearch';
 import type { SearchCursor } from '../types/search';
-import { Loader2 } from 'lucide-react';
+import { FileSearch, Loader2 } from 'lucide-react';
 
 export function SearchPage() {
-  const [query, setQuery] = useState('');
+  const [searchParams] = useSearchParams();
+
+  // Seed the query from the ?q param on mount so the quick-find entry point
+  // (which navigates to /search?q=...) genuinely runs Deep Search.
+  const initialQuery = searchParams.get('q')?.trim() ?? '';
+
+  const [query, setQuery] = useState(initialQuery);
   const [cursors, setCursors] = useState<SearchCursor[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [previewFileId, setPreviewFileId] = useState<number | null>(null);
@@ -57,26 +64,26 @@ export function SearchPage() {
     <div className="container mx-auto px-4 py-8 max-w-5xl">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Search Files</h1>
-        <p className="text-gray-600">
+        <h1 className="text-3xl font-bold mb-2 text-ink">Deep Search</h1>
+        <p className="text-muted">
           Search across all your files using full-text search. Supports phrase search, AND, OR operators.
         </p>
       </div>
 
       {/* Search bar */}
       <div className="mb-8">
-        <SearchBar 
-          onSearch={handleSearch} 
+        <SearchBar
+          onSearch={handleSearch}
           initialQuery={query}
           placeholder="Search for text in your files..."
         />
         {query && (
-          <div className="mt-2 text-sm text-gray-600">
+          <div className="mt-2 text-sm text-muted">
             <p className="font-medium">Search tips:</p>
             <ul className="list-disc list-inside mt-1 space-y-1">
-              <li>Use quotes for exact phrases: <code className="bg-gray-100 px-1 rounded">"machine learning"</code></li>
-              <li>Combine terms with AND: <code className="bg-gray-100 px-1 rounded">cats AND dogs</code></li>
-              <li>Find either term with OR: <code className="bg-gray-100 px-1 rounded">cats OR dogs</code></li>
+              <li>Use quotes for exact phrases: <code className="bg-canvas px-1 rounded">"machine learning"</code></li>
+              <li>Combine terms with AND: <code className="bg-canvas px-1 rounded">cats AND dogs</code></li>
+              <li>Find either term with OR: <code className="bg-canvas px-1 rounded">cats OR dogs</code></li>
             </ul>
           </div>
         )}
@@ -85,8 +92,8 @@ export function SearchPage() {
       {/* Loading state */}
       {isLoading && (
         <div className="flex flex-col items-center justify-center py-16 gap-4">
-          <Loader2 className="animate-spin text-blue-600" size={48} />
-          <p className="text-gray-600">Searching...</p>
+          <Loader2 className="animate-spin text-accent" size={48} />
+          <p className="text-muted">Searching...</p>
         </div>
       )}
 
@@ -104,8 +111,8 @@ export function SearchPage() {
       {data && !isLoading && (
         <>
           <div className="mb-6">
-            <p className="text-gray-600">
-              Found <span className="font-medium">{data.count}</span> result{data.count !== 1 ? 's' : ''}
+            <p className="text-muted">
+              Found <span className="font-medium text-ink">{data.count}</span> result{data.count !== 1 ? 's' : ''}
               {currentPage > 1 && ` (page ${currentPage})`}
             </p>
           </div>
@@ -131,20 +138,9 @@ export function SearchPage() {
 
       {/* Empty state (no query) */}
       {!query && !isLoading && (
-        <div className="text-center py-16 text-gray-500">
-          <svg 
-            className="mx-auto mb-4 opacity-50" 
-            width="64" 
-            height="64" 
-            viewBox="0 0 24 24" 
-            fill="none" 
-            stroke="currentColor"
-            strokeWidth="1.5"
-          >
-            <circle cx="11" cy="11" r="8" />
-            <path d="m21 21-4.35-4.35" />
-          </svg>
-          <p className="text-lg">Start searching your files</p>
+        <div className="text-center py-16 text-faint">
+          <FileSearch className="mx-auto mb-4" size={64} strokeWidth={1.5} />
+          <p className="text-lg text-muted">Start searching your files</p>
           <p className="text-sm mt-2">Enter a search term above to find text in your uploaded files</p>
         </div>
       )}
@@ -159,4 +155,3 @@ export function SearchPage() {
     </div>
   );
 }
-
