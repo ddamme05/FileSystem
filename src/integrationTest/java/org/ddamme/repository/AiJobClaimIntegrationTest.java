@@ -316,8 +316,13 @@ class AiJobClaimIntegrationTest extends BaseIntegrationTest {
 
             assertThat(worker1JobIds).isNotNull();
             assertThat(worker2JobIds).isNotNull();
-            assertThat(worker1JobIds).doesNotContainAnyElementsOf(worker2JobIds)
-                .as("Workers should claim different jobs (no double-claiming)");
+            // Disjointness is the real invariant. SKIP LOCKED lets one worker
+            // legitimately claim all 5 jobs (each asks for up to 10), leaving the
+            // other with 0 — a valid no-double-claim outcome. Collections.disjoint
+            // tolerates an empty list; doesNotContainAnyElementsOf throws on one.
+            assertThat(java.util.Collections.disjoint(worker1JobIds, worker2JobIds))
+                .as("Workers should claim different jobs (no double-claiming)")
+                .isTrue();
 
             int totalClaimed = worker1JobIds.size() + worker2JobIds.size();
             assertThat(totalClaimed).isEqualTo(5)
