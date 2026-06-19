@@ -1,0 +1,89 @@
+# DigitalOcean Droplet + Spaces production override for docker-compose.yml
+#
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.digitalocean.yml up -d --build
+#
+# This is ADDITIVE. It does NOT replace docker-compose.prod.yml (AWS/EC2) — keep
+# both so you can still deploy to AWS. Reads Spaces settings from a Droplet-local
+# .env (see DIGITALOCEAN_MIGRATION.md "DigitalOcean Environment File").
+#
+# COMPOSE MERGE SEMANTICS (important):
+# Compose CONCATENATES list keys (ports, volumes) across -f files — a plain
+# `ports: []` / `volumes: []` does NOT clear the base file's entries. We use the
+# `!reset` / `!override` tags (Docker Compose v2.24.4+ — `!override` requires
+# 2.24.4) to actually drop the inherited dev port bindings and the ${HOME}/.aws
+# mount. After editing, verify:
+#   docker compose -f docker-compose.yml -f docker-compose.digitalocean.yml config
+# and confirm NO /aws mount and NO published 8080 / 5433 / 3000 / 8126 / 4317 / 4318.
+
+services:
+  app:
+    # Mirror the EC2 prod override: the app writes OCR/temp files at runtime.
+    read_only: false
+    cap_add: [ SETUID, SETGID, DAC_READ_SEARCH ]
+    # Drop the base "8080:8080" host publish — the frontend reaches the app over the
+    # internal Docker network, so 8080 must not be exposed on the Droplet.
+    ports: !reset []
+    # Drop the base "${HOME}/.aws:/aws:ro" mount — a Droplet has no ~/.aws; Spaces
+    # creds come from the env vars below.
+    volumes: !reset []
+    environment:
+      DD_SERVICE: file-system-app
+      DD_ENV: prod
+      SPRING_PROFILES_ACTIVE: prod
+      # application-prod.yml requires this and provides no default.
+      SPRING_DATASOURCE_USERNAME: user
+
+      # --- DigitalOcean Spaces (S3-compatible) ---
+      # The endpoint host (region slug) selects the datacenter: nyc3, sfo3, ams3, ...
+      # AWS_REGION is the SDK *signing* region; DigitalOcean's SDK docs use us-east-1.
+      AWS_REGION: ${DO_SPACES_SIGNING_REGION:-us-east-1}
+      AWS_S3_BUCKET: ${DO_SPACES_BUCKET:?set DO_SPACES_BUCKET in .env}
+      AWS_ENDPOINT_URL_S3: https://${DO_SPACES_REGION:?set DO_SPACES_REGION in .env}.digitaloceanspaces.com
+      AWS_ACCESS_KEY_ID: ${DO_SPACES_KEY:?set DO_SPACES_KEY in .env}
+      AWS_SECRET_ACCESS_KEY: ${DO_SPACES_SECRET:?set DO_SPACES_SECRET in .env}
+
+      # Spaces does not support SSE-S3 (AES256). Blank = don't send the header.
+      # On AWS this stays AES256 via application.yml's default.
+      AWS_S3_SERVER_SIDE_ENCRYPTION: ""
+
+      # Droplets have no EC2 instance metadata. Setting AWS_ENDPOINT_URL_S3 makes
+      # AwsConfig use EnvironmentVariableCredentialsProvider, so the keys above are
+      # used directly. Disable profile/config/metadata lookups to avoid surprises.
+      AWS_PROFILE: ""
+      AWS_SHARED_CREDENTIALS_FILE: ""
+      AWS_CONFIG_FILE: ""
+      AWS_EC2_METADATA_DISABLED: "true"
+      AWS_SDK_LOAD_CONFIG: "false"
+
+  postgres-db:
+    # Drop the base "5433:5432" host publish — only the app talks to Postgres, over
+    # the internal network. Never expose the DB on the Droplet.
+    ports: !reset []
+
+  frontend:
+    # !override replaces the base "3000:80" instead of appending, so only 80/443
+    # are published.
+    ports: !override
+      - "80:80"
+      - "443:443/tcp"
+      - "443:443/udp"
+    # !override replaces the base "./client/nginx.conf" mount (which targets the
+    # same /etc/nginx/conf.d/default.conf) with the production HTTPS config —
+    # otherwise both would mount to the same path. Reusing managefiles.duckdns.org
+    # (DO Reserved IP) means file-storage.conf needs no domain edits; the cert must
+    # already exist at /etc/letsencrypt/live/managefiles.duckdns.org/ (copy the whole
+    # /etc/letsencrypt tree from the EC2 box — see TLS And DNS in the runbook).
+    volumes: !override
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+      - ./deployment/nginx/file-storage.conf:/etc/nginx/conf.d/default.conf:ro
+
+  datadog:
+    # Drop the base "8126/4317/4318" host publishes — the app sends traces/metrics
+    # over the internal network.
+    ports: !reset []
+    environment:
+      DD_ENV: prod
+      # To run WITHOUT Datadog: `docker compose ... up -d --scale datadog=0`
+      # and add to app:  MANAGEMENT_OTLP_METRICS_EXPORT_ENABLED: "false"
+      # (.secrets/dd_api_key and .secrets/dd_site still need dummy values to start.)

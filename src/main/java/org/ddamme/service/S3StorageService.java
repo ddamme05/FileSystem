@@ -64,15 +64,22 @@ public class S3StorageService implements StorageService {
 
             String contentDisposition = "attachment; filename=\"" + ascii + "\"; filename*=UTF-8''" + rfc5987;
 
-            PutObjectRequest putObjectRequest =
+            PutObjectRequest.Builder putObjectRequestBuilder =
                     PutObjectRequest.builder()
                             .bucket(bucketName)
                             .key(storageKey)
                             .contentType(contentType)
                             .contentDisposition(contentDisposition)
-                            .contentLength(file.getSize())
-                            .serverSideEncryption(ServerSideEncryption.AES256)
-                            .build();
+                            .contentLength(file.getSize());
+
+            // Only send the SSE header when configured. AWS keeps "AES256"
+            // (its IAM policy requires it); DigitalOcean Spaces sets this blank.
+            String sse = awsProperties.getS3().getServerSideEncryption();
+            if (sse != null && !sse.isBlank()) {
+                putObjectRequestBuilder.serverSideEncryption(ServerSideEncryption.fromValue(sse.trim()));
+            }
+
+            PutObjectRequest putObjectRequest = putObjectRequestBuilder.build();
 
             s3Client.putObject(
                     putObjectRequest, RequestBody.fromInputStream(file.getInputStream(), file.getSize()));
