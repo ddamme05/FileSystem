@@ -26,5 +26,14 @@ public class AwsProperties {
         @Min(1)
         @Max(7 * 24 * 60) // S3 presign max is 7 days (10080 minutes)
         private int presignTtlMinutes = 5; // default 5 minutes
+
+        /**
+         * Server-side encryption header sent on upload (PutObject).
+         * "AES256" matches AWS S3 and the AWS IAM policy that REQUIRES
+         * s3:x-amz-server-side-encryption=AES256 on PutObject.
+         * Leave blank/empty to send no SSE header — required for DigitalOcean
+         * Spaces, which does not support SSE-S3.
+         */
+        private String serverSideEncryption = "AES256";
     }
 }

@@ -71,6 +71,9 @@ aws:
   s3:
     bucket-name: ${AWS_S3_BUCKET:filesystem-s3}
     presign-ttl-minutes: ${AWS_S3_PRESIGN_TTL_MINUTES:5}
+    # AES256 = current AWS behavior (and the AWS IAM policy requires it).
+    # DigitalOcean Spaces sets AWS_S3_SERVER_SIDE_ENCRYPTION="" to disable it.
+    server-side-encryption: ${AWS_S3_SERVER_SIDE_ENCRYPTION:AES256}
 
 metrics:
   s3:
