@@ -52,7 +52,7 @@ export function FileFilters({
     return (
         <div className="mb-6 flex flex-wrap items-center justify-between gap-4 card p-4">
             {/* Left side: Type filter + Search */}
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
                 <select
                     id="type-filter"
                     value={typeFilter}
@@ -87,7 +87,7 @@ export function FileFilters({
                                     value={searchQuery}
                                     onChange={(e) => onSearchChange(e.target.value)}
                                     placeholder="Search files..."
-                                    className="w-64 rounded-lg border border-border bg-surface py-1.5 pl-10 pr-3 text-sm text-ink focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30"
+                                    className="w-full sm:w-64 rounded-lg border border-border bg-surface py-1.5 pl-10 pr-3 text-sm text-ink focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30"
                                     autoFocus
                                 />
                             </div>

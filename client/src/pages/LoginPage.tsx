@@ -1,5 +1,6 @@
 import {type FormEvent, useEffect, useState} from 'react';
 import {Link, useNavigate} from 'react-router-dom';
+import {FolderClosed} from 'lucide-react';
 import {toast} from 'sonner';
 import {useAuth} from '@/hooks/useAuth';
 import {api, ApiError} from '@/api/client';
@@ -83,16 +84,7 @@ export function LoginPage() {
                         className="grid h-12 w-12 place-items-center rounded-xl text-white shadow-[0_10px_24px_-8px_rgba(91,80,230,.6)]"
                         style={{background: 'linear-gradient(155deg,#6d63f0,#5b50e6 55%,#4b40d4)'}}
                     >
-                        <svg
-                            width="26"
-                            height="26"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="1.9"
-                        >
-                            <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-                        </svg>
+                        <FolderClosed size={26} strokeWidth={1.9} />
                     </span>
                     <h2 className="text-2xl font-bold text-ink">File Storage</h2>
                     <p className="text-sm text-muted">Sign in to your files</p>
