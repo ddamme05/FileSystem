@@ -76,15 +76,33 @@ export function LoginPage() {
     }
 
     return (
-        <div className="flex min-h-screen items-center justify-center bg-gray-50">
-            <div className="w-full max-w-md space-y-8 rounded-lg bg-white p-8 shadow">
-                <h2 className="text-center text-3xl font-bold">File Storage</h2>
+        <div className="flex min-h-screen items-center justify-center">
+            <div className="card w-full max-w-sm p-8">
+                <div className="mb-7 flex flex-col items-center gap-3">
+                    <span
+                        className="grid h-12 w-12 place-items-center rounded-xl text-white shadow-[0_10px_24px_-8px_rgba(91,80,230,.6)]"
+                        style={{background: 'linear-gradient(155deg,#6d63f0,#5b50e6 55%,#4b40d4)'}}
+                    >
+                        <svg
+                            width="26"
+                            height="26"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="1.9"
+                        >
+                            <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                        </svg>
+                    </span>
+                    <h2 className="text-2xl font-bold text-ink">File Storage</h2>
+                    <p className="text-sm text-muted">Sign in to your files</p>
+                </div>
                 <form
                     onSubmit={handleLogin}
-                    className={`space-y-6 ${hasError ? 'animate-shake' : ''}`}
+                    className={`space-y-5 ${hasError ? 'animate-shake' : ''}`}
                 >
                     <div>
-                        <label htmlFor="username" className="block text-sm font-medium">
+                        <label htmlFor="username" className="block text-sm font-medium text-ink">
                             Username
                         </label>
                         <input
@@ -92,11 +110,11 @@ export function LoginPage() {
                             name="username"
                             type="text"
                             required
-                            className="mt-1 block w-full rounded border p-2"
+                            className="input mt-1.5"
                         />
                     </div>
                     <div>
-                        <label htmlFor="password" className="block text-sm font-medium">
+                        <label htmlFor="password" className="block text-sm font-medium text-ink">
                             Password
                         </label>
                         <input
@@ -104,17 +122,17 @@ export function LoginPage() {
                             name="password"
                             type="password"
                             required
-                            className="mt-1 block w-full rounded border p-2"
+                            className="input mt-1.5"
                         />
                     </div>
                     <button type="submit" disabled={isLoading} className="btn-primary w-full">
                         {isLoading ? 'Logging in...' : 'Login'}
                     </button>
                 </form>
-                <div className="text-center">
-                    <p className="text-sm text-gray-600">
+                <div className="mt-6 text-center">
+                    <p className="text-sm text-muted">
                         Don't have an account?{' '}
-                        <Link to="/register" className="font-medium text-blue-600 hover:text-blue-500">
+                        <Link to="/register" className="font-medium text-accent">
                             Sign up
                         </Link>
                     </p>

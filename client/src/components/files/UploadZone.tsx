@@ -181,16 +181,16 @@ export function UploadZone() {
         <>
             <div
                 {...getRootProps()}
-                className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition ${
-                    isDragActive ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-gray-400'
+                className={`rounded-2xl border-2 border-dashed bg-accent-weak/40 p-10 text-center cursor-pointer transition ${
+                    isDragActive ? 'border-accent bg-accent-weak/70' : 'border-accent/40 hover:border-accent'
                 }`}
             >
                 <input {...getInputProps()} />
-                <UploadIcon className="mx-auto h-12 w-12 text-gray-400"/>
-                <p className="mt-2 text-sm text-gray-600">
+                <UploadIcon className="mx-auto h-9 w-9 text-accent"/>
+                <p className="mt-2 text-sm font-semibold text-ink">
                     Drag & drop files here, or click to select
                 </p>
-                <p className="text-xs text-gray-500 mt-1">Max 10 MB per file</p>
+                <p className="text-xs text-faint mt-1">Max 10 MB per file</p>
             </div>
 
             {/* Duplicate File Dialog */}

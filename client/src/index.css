@@ -2,17 +2,35 @@
 @tailwind components;
 @tailwind utilities;
 
+body {
+    color: #161a23;
+    min-height: 100vh;
+    background-color: #f6f8fb;
+    background:
+        radial-gradient(900px 380px at 50% -120px, rgba(91, 80, 230, .07), rgba(91, 80, 230, 0) 70%),
+        radial-gradient(1200px 700px at 50% -8%, #eef1f7 0%, #f3f6fa 46%, #f6f8fb 100%);
+    background-attachment: fixed;
+}
+
 @layer components {
     .btn-primary {
-        @apply rounded bg-blue-600 px-4 py-2 font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50;
+        @apply rounded-lg bg-accent px-4 py-2 font-medium text-white shadow-soft transition hover:brightness-105 focus:outline-none focus:ring-2 focus:ring-accent/30 disabled:cursor-not-allowed disabled:opacity-50;
     }
 
     .btn-secondary {
-        @apply rounded border border-gray-300 bg-white px-4 py-2 font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50;
+        @apply rounded-lg border border-border bg-surface px-4 py-2 font-medium text-ink shadow-soft transition hover:border-faint focus:outline-none focus:ring-2 focus:ring-accent/20 disabled:cursor-not-allowed disabled:opacity-50;
     }
 
     .btn-danger {
-        @apply rounded bg-red-600 px-4 py-2 font-medium text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50;
+        @apply rounded-lg bg-red-600 px-4 py-2 font-medium text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50;
+    }
+
+    .card {
+        @apply rounded-2xl border border-border bg-surface shadow-card;
+    }
+
+    .input {
+        @apply w-full rounded-lg border border-border bg-canvas px-3 py-2 text-ink transition focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/30;
     }
 }
 
