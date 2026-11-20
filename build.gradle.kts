@@ -70,7 +70,7 @@ jacoco {
 
 dependencyManagement {
     imports {
-        mavenBom("org.testcontainers:testcontainers-bom:1.20.2")
+        mavenBom("org.testcontainers:testcontainers-bom:1.21.4")
     }
 }
 
