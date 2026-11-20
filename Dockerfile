@@ -1,8 +1,23 @@
+# Share Ubuntu's security-patched JRE between the builder and the runtime.
+FROM ubuntu:22.04 AS java
+
+ENV LANG=C.UTF-8
+
+# Ubuntu USN-9156-1 fixes CVE-2026-114938 and other OpenJDK 21 CVEs.
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+      ca-certificates \
+      openjdk-21-jre-headless \
+    && dpkg --compare-versions "$(dpkg-query -W -f='${Version}' openjdk-21-jre-headless)" ge '21.0.13.1+2-1~22.04.1' \
+    && rm -rf /var/lib/apt/lists/*
+
 # ============================================
-# Stage 1: Build the Spring Boot application
+# Build the Spring Boot application
 # ============================================
-# Pin Gradle and JDK versions to prevent unexpected upgrades
-FROM gradle:8.8-jdk21-alpine AS build
+FROM java AS build
+
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+      openjdk-21-jdk-headless \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /src
 
@@ -20,11 +35,9 @@ COPY src ./src
 RUN ./gradlew --no-daemon clean bootJar
 
 # ============================================
-# Stage 2: Runtime image (Ubuntu Jammy for Tesseract)
+# Runtime image (Ubuntu Jammy for Tesseract)
 # ============================================
-# Pin specific JRE version for reproducible builds
-# Format: eclipse-temurin:{java_version}_{build_version}-jre-jammy
-FROM eclipse-temurin:21.0.5_11-jre-jammy
+FROM java AS runtime
 
 WORKDIR /app
 
@@ -34,10 +47,13 @@ ARG DD_JAVA_AGENT_VERSION=1.52.1
 # Install runtime dependencies including Tesseract OCR and Leptonica
 # Use PPA for newer Tesseract/Leptonica versions that match lept4j ABI expectations
 RUN apt-get update && apt-get install -y --no-install-recommends \
+      gnupg \
       software-properties-common \
     && add-apt-repository -y ppa:alex-p/tesseract-ocr-devel \
     && apt-get update && apt-get install -y --no-install-recommends \
       curl \
+      fontconfig \
+      fonts-dejavu-core \
       gosu \
       tesseract-ocr \
       tesseract-ocr-eng \

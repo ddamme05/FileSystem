@@ -25,10 +25,10 @@ RUN npm run build
 # ============================================
 # Stage 2: Serve with Nginx
 # ============================================
-FROM nginx:1.25-alpine
+FROM nginx:1.30.7-alpine
 
-# Install curl for health checks
-RUN apk add --no-cache curl
+# Apply Alpine runtime security updates and install curl for health checks.
+RUN apk upgrade --no-cache && apk add --no-cache curl
 
 # Remove default nginx config
 RUN rm /etc/nginx/conf.d/default.conf
